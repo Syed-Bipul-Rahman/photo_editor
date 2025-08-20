@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:photo_management_app/camera/view/camera_page.dart';
-import 'package:photo_management_app/counter/counter.dart';
 import 'package:photo_management_app/l10n/l10n.dart';
+import 'package:photo_management_app/routing/routing.dart';
+import 'package:photo_management_app/routing/app_routes.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final router = AppRouter.instance;
+    router.addRoutes(AppRoutes.routes);
+
     return MaterialApp(
+      navigatorKey: router.navigatorKey,
+      navigatorObservers: router.observers,
+      onGenerateRoute: router.generateRoute,
+      initialRoute: AppRoutes.camera,
       theme: ThemeData(
         appBarTheme: AppBarTheme(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -17,7 +24,6 @@ class App extends StatelessWidget {
       ),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const CameraPage(),
     );
   }
 }
