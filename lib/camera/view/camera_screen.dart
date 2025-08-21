@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -32,12 +33,14 @@ class _CameraScreenState extends State<CameraScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _setFullScreen();
     _initializeCamera();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _restoreSystemUI();
     _controller?.dispose();
     super.dispose();
   }
@@ -53,6 +56,20 @@ class _CameraScreenState extends State<CameraScreen>
     } else if (state == AppLifecycleState.resumed) {
       _initializeCamera();
     }
+  }
+
+  void _setFullScreen() {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.immersiveSticky,
+      overlays: [],
+    );
+  }
+
+  void _restoreSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
   }
 
   Future<void> _initializeCamera() async {
@@ -279,85 +296,89 @@ class _CameraScreenState extends State<CameraScreen>
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: _isInitialized && _controller != null
-            ? Stack(
-                children: [
-                  GestureDetector(
+      body: _isInitialized && _controller != null
+          ? Stack(
+              children: [
+                Positioned.fill(
+                  child: GestureDetector(
                     onTapUp: (details) => _onFocusTap(details.globalPosition),
                     onScaleUpdate: (details) {
                       _onZoomChanged(_currentZoom * details.scale);
                     },
                     child: CameraPreview(_controller!),
                   ),
-                  if (_showGrid) GridOverlay(),
-                  if (_focusPoint != null)
-                    Positioned(
-                      left: _focusPoint!.dx - 50,
-                      top: _focusPoint!.dy - 50,
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.yellow, width: 2),
-                          color: Colors.transparent,
-                        ),
+                ),
+                if (_showGrid) 
+                  Positioned.fill(
+                    child: GridOverlay(),
+                  ),
+                if (_focusPoint != null)
+                  Positioned(
+                    left: _focusPoint!.dx - 50,
+                    top: _focusPoint!.dy - 50,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.yellow, width: 2),
+                        color: Colors.transparent,
                       ),
                     ),
-                  Positioned(
-                    top: 20,
-                    left: 20,
-                    right: 20,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          onPressed: _toggleFlash,
-                          icon: Icon(
-                            _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _toggleGrid,
-                          icon: Icon(
-                            _showGrid ? Icons.grid_on : Icons.grid_off,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ),
-                        Text(
-                          '${_currentZoom.toStringAsFixed(1)}x',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: CameraControls(
-                      onCapture: _takePicture,
-                      onSwitchCamera: _switchCamera,
-                      canSwitchCamera: _cameras.length > 1,
-                    ),
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: _toggleFlash,
+                        icon: Icon(
+                          _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _toggleGrid,
+                        icon: Icon(
+                          _showGrid ? Icons.grid_on : Icons.grid_off,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      Text(
+                        '${_currentZoom.toStringAsFixed(1)}x',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              )
-            : const Center(
-                child: CircularProgressIndicator(
-                  color: Colors.white,
                 ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: CameraControls(
+                    onCapture: _takePicture,
+                    onSwitchCamera: _switchCamera,
+                    canSwitchCamera: _cameras.length > 1,
+                  ),
+                ),
+              ],
+            )
+          : const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
               ),
-      ),
+            ),
     );
   }
 }
