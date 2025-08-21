@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -27,6 +28,7 @@ class _CameraScreenState extends State<CameraScreen>
   double _minZoom = 1;
   double _maxZoom = 1;
   bool _showGrid = true;
+  bool _showMoreControls = false;
   Offset? _focusPoint;
 
   @override
@@ -227,6 +229,12 @@ class _CameraScreenState extends State<CameraScreen>
     });
   }
 
+  void _toggleMoreControls() {
+    setState(() {
+      _showMoreControls = !_showMoreControls;
+    });
+  }
+
   void _showPermissionDeniedDialog() {
     showDialog(
       context: context,
@@ -294,9 +302,50 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
+  Widget _buildRightSideControl({
+    VoidCallback? onTap,
+    required String iconPath,
+    required String label,
+    bool showLabel = true,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showLabel && label.isNotEmpty) ...[
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: SvgPicture.asset(
+                iconPath,
+                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: Colors.black,
       body: _isInitialized && _controller != null
@@ -311,7 +360,7 @@ class _CameraScreenState extends State<CameraScreen>
                     child: CameraPreview(_controller!),
                   ),
                 ),
-                if (_showGrid) 
+                if (_showGrid)
                   Positioned.fill(
                     child: GridOverlay(),
                   ),
@@ -329,34 +378,93 @@ class _CameraScreenState extends State<CameraScreen>
                     ),
                   ),
                 Positioned(
-                  top: 20,
+                  top: 50,
                   left: 20,
                   right: 20,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        onPressed: _toggleFlash,
-                        icon: Icon(
-                          _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                          color: Colors.white,
-                          size: 30,
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: SvgPicture.asset(
+                            'assets/icons/burger.svg',
+                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                          ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: _toggleGrid,
-                        icon: Icon(
-                          _showGrid ? Icons.grid_on : Icons.grid_off,
-                          color: Colors.white,
-                          size: 30,
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: SvgPicture.asset(
+                            'assets/icons/person.svg',
+                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                          ),
                         ),
                       ),
-                      Text(
-                        '${_currentZoom.toStringAsFixed(1)}x',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      GestureDetector(
+                        onTap: _switchCamera,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Image.asset(
+                              'assets/icons/switch_camera.png',
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: 120,
+                  right: 20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildRightSideControl(
+                        onTap: _toggleFlash,
+                        iconPath: _isFlashOn ? 'assets/icons/flash_on.svg' : 'assets/icons/flash_off.svg',
+                        label: 'Flash',
+                      ),
+                      const SizedBox(height: 30),
+                      _buildRightSideControl(
+                        iconPath: 'assets/icons/copy_icon_that_represent_multi_click.svg',
+                        label: 'Multi Click',
+                      ),
+                      const SizedBox(height: 30),
+                      _buildRightSideControl(
+                        iconPath: 'assets/icons/timer_off.svg',
+                        label: 'Timer',
+                      ),
+                      const SizedBox(height: 30),
+                      GestureDetector(
+                        onTap: _toggleMoreControls,
+                        child: _buildRightSideControl(
+                          iconPath: _showMoreControls 
+                              ? 'assets/icons/show_less_items.svg' 
+                              : 'assets/icons/show_more_item.svg',
+                          label: '',
+                          showLabel: false,
                         ),
                       ),
                     ],
