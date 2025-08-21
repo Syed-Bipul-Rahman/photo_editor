@@ -43,40 +43,26 @@ class CameraControls extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Column(
                   children: [
                     _buildGalleryButton(),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'album',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
+                    // const SizedBox(height: 8),
+                    // const Text(
+                    //   'album',
+                    //   style: TextStyle(
+                    //     color: Colors.white,
+                    //     fontSize: 12,
+                    //   ),
+                    // ),
                   ],
                 ),
                 _buildCaptureButton(),
-                Column(
-                  children: [
-                    _buildMultiClickButton(),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'click/multi click',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+                _buildMultiClickButton(),
               ],
             ),
-            const SizedBox(height: 10),
-            // _buildRecentImagesRow(),
           ],
         ),
       ),
@@ -127,33 +113,6 @@ class CameraControls extends StatelessWidget {
     );
   }
 
-  Widget _buildSwitchCameraButton() {
-    return GestureDetector(
-      onTap: canSwitchCamera ? onSwitchCamera : null,
-      child: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          color: canSwitchCamera
-              ? Colors.white.withValues(alpha: 0.2)
-              : Colors.grey.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: canSwitchCamera
-                ? Colors.white.withValues(alpha: 0.3)
-                : Colors.grey.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          Icons.flip_camera_ios,
-          color: canSwitchCamera ? Colors.white : Colors.grey,
-          size: 28,
-        ),
-      ),
-    );
-  }
-
   Widget _buildZoomButton(String label, {bool isSelected = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -180,57 +139,20 @@ class CameraControls extends StatelessWidget {
 
   Widget _buildMultiClickButton() {
     return Container(
+      clipBehavior: Clip.antiAlias,
       width: 60,
       height: 60,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
+        shape: BoxShape.circle,
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SvgPicture.asset(
-          'assets/icons/multi_click_image.svg',
-          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentImagesRow() {
-    return SizedBox(
-      height: 60,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: List.generate(6, (index) {
-          return Container(
-            width: 60,
-            height: 60,
-            margin: EdgeInsets.only(right: index < 5 ? 8 : 0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey.withValues(alpha: 0.3),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                color: Colors.grey.withValues(alpha: 0.5),
-                child: const Icon(
-                  Icons.image,
-                  color: Colors.white54,
-                  size: 24,
-                ),
-              ),
-            ),
-          );
-        }),
+      child: Image.asset(
+        'assets/images/for_preview_delete_this_later.png',
+        fit: BoxFit.cover,
       ),
     );
   }

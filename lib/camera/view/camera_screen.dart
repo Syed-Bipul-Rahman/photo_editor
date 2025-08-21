@@ -198,7 +198,7 @@ class _CameraScreenState extends State<CameraScreen>
       return;
     }
 
-    final renderBox = context.findRenderObject() as RenderBox;
+    final renderBox = context.findRenderObject()! as RenderBox;
     final localPoint = renderBox.globalToLocal(point);
     final size = renderBox.size;
 
@@ -303,9 +303,9 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Widget _buildRightSideControl({
-    VoidCallback? onTap,
     required String iconPath,
     required String label,
+    VoidCallback? onTap,
     bool showLabel = true,
   }) {
     return GestureDetector(
@@ -335,7 +335,10 @@ class _CameraScreenState extends State<CameraScreen>
               padding: const EdgeInsets.all(12),
               child: SvgPicture.asset(
                 iconPath,
-                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
               ),
             ),
           ),
@@ -361,7 +364,7 @@ class _CameraScreenState extends State<CameraScreen>
                   ),
                 ),
                 if (_showGrid)
-                  Positioned.fill(
+                  const Positioned.fill(
                     child: GridOverlay(),
                   ),
                 if (_focusPoint != null)
@@ -395,42 +398,55 @@ class _CameraScreenState extends State<CameraScreen>
                           padding: const EdgeInsets.all(12),
                           child: SvgPicture.asset(
                             'assets/icons/burger.svg',
-                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: SvgPicture.asset(
-                            'assets/icons/person.svg',
-                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _switchCamera,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Image.asset(
-                              'assets/icons/switch_camera.png',
-                              color: Colors.white,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
                             ),
                           ),
                         ),
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: SvgPicture.asset(
+                                'assets/icons/person.svg',
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.white,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 8,
+                          ),
+                          GestureDetector(
+                            onTap: _switchCamera,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Image.asset(
+                                  'assets/icons/switch_camera.png',
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -443,12 +459,15 @@ class _CameraScreenState extends State<CameraScreen>
                     children: [
                       _buildRightSideControl(
                         onTap: _toggleFlash,
-                        iconPath: _isFlashOn ? 'assets/icons/flash_on.svg' : 'assets/icons/flash_off.svg',
+                        iconPath: _isFlashOn
+                            ? 'assets/icons/flash_on.svg'
+                            : 'assets/icons/flash_off.svg',
                         label: 'Flash',
                       ),
                       const SizedBox(height: 30),
                       _buildRightSideControl(
-                        iconPath: 'assets/icons/copy_icon_that_represent_multi_click.svg',
+                        iconPath:
+                            'assets/icons/copy_icon_that_represent_multi_click.svg',
                         label: 'Multi Click',
                       ),
                       const SizedBox(height: 30),
@@ -460,8 +479,8 @@ class _CameraScreenState extends State<CameraScreen>
                       GestureDetector(
                         onTap: _toggleMoreControls,
                         child: _buildRightSideControl(
-                          iconPath: _showMoreControls 
-                              ? 'assets/icons/show_less_items.svg' 
+                          iconPath: _showMoreControls
+                              ? 'assets/icons/show_less_items.svg'
                               : 'assets/icons/show_more_item.svg',
                           label: '',
                           showLabel: false,
