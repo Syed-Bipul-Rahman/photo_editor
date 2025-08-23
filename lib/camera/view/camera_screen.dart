@@ -465,17 +465,33 @@ class _CameraScreenState extends State<CameraScreen>
                         label: 'Flash',
                       ),
                       const SizedBox(height: 30),
-                      _buildRightSideControl(
-                        iconPath:
-                            'assets/icons/copy_icon_that_represent_multi_click.svg',
-                        label: 'Multi Click',
-                      ),
-                      const SizedBox(height: 30),
-                      _buildRightSideControl(
-                        iconPath: 'assets/icons/timer_off.svg',
-                        label: 'Timer',
-                      ),
-                      const SizedBox(height: 30),
+                      if (_showMoreControls)
+                        Column(
+                          children: [
+                            _buildRightSideControl(
+                              iconPath:
+                                  'assets/icons/copy_icon_that_represent_multi_click.svg',
+                              label: 'Multi Click',
+                            ),
+                            const SizedBox(height: 30),
+                          ],
+                        )
+                      else
+                        SizedBox.shrink(),
+
+                      if (_showMoreControls)
+                        Column(
+                          children: [
+                            _buildRightSideControl(
+                              iconPath: 'assets/icons/timer_off.svg',
+                              label: 'Timer',
+                            ),
+                            const SizedBox(height: 30),
+                          ],
+                        )
+                      else
+                        SizedBox.shrink(),
+
                       GestureDetector(
                         onTap: _toggleMoreControls,
                         child: _buildRightSideControl(
