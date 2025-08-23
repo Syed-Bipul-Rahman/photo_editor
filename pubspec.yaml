@@ -19,6 +19,8 @@ dependencies:
   path_provider: ^2.1.4
   path: ^1.9.0
   flutter_svg:
+  google_fonts:
+
 
 dev_dependencies:
   bloc_test: ^10.0.0
@@ -26,6 +28,7 @@ dev_dependencies:
     sdk: flutter
   mocktail: ^1.0.4
   very_good_analysis: ^9.0.0
+
 
 
 flutter:

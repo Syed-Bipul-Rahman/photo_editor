@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CameraControls extends StatelessWidget {
   final VoidCallback onCapture;
@@ -49,18 +50,19 @@ class CameraControls extends StatelessWidget {
                 Column(
                   children: [
                     _buildGalleryButton(),
-                    // const SizedBox(height: 8),
-                    // const Text(
-                    //   'album',
-                    //   style: TextStyle(
-                    //     color: Colors.white,
-                    //     fontSize: 12,
-                    //   ),
-                    // ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Albums',
+                      style: GoogleFonts.publicSans(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        color: const Color(0xFFFFFFFF),
+                      ),
+                    ),
                   ],
                 ),
                 _buildCaptureButton(),
-                _buildMultiClickButton(),
+                _buildRecentClicks(),
               ],
             ),
           ],
@@ -70,23 +72,20 @@ class CameraControls extends StatelessWidget {
   }
 
   Widget _buildGalleryButton() {
-    return Container(
+    return SizedBox(
       width: 60,
       height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SvgPicture.asset(
-          'assets/icons/albums_icon.svg',
-          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-        ),
+      // decoration: BoxDecoration(
+      //   color: Colors.white.withValues(alpha: 0.2),
+      //   borderRadius: BorderRadius.circular(8),
+      //   border: Border.all(
+      //     color: Colors.white.withValues(alpha: 0.3),
+      //     width: 1,
+      //   ),
+      // ),
+      child: SvgPicture.asset(
+        'assets/icons/albums_icon.svg',
+        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
       ),
     );
   }
@@ -97,17 +96,9 @@ class CameraControls extends StatelessWidget {
       child: Container(
         width: 80,
         height: 80,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          border: Border.all(color: Colors.grey.shade300, width: 4),
-        ),
-        child: Container(
-          margin: const EdgeInsets.all(6),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-          ),
+        child: SvgPicture.asset(
+          'assets/icons/click_single_image.svg',
+          fit: BoxFit.cover,
         ),
       ),
     );
@@ -137,7 +128,7 @@ class CameraControls extends StatelessWidget {
     );
   }
 
-  Widget _buildMultiClickButton() {
+  Widget _buildRecentClicks() {
     return Container(
       clipBehavior: Clip.antiAlias,
       width: 60,
