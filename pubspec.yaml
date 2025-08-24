@@ -20,6 +20,8 @@ dependencies:
   path: ^1.9.0
   flutter_svg:
   google_fonts:
+  camerawesome: ^2.5.0
+  open_filex:
 
 
 dev_dependencies:
