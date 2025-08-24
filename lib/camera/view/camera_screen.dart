@@ -354,15 +354,7 @@ class _CameraScreenState extends State<CameraScreen>
       body: _isInitialized && _controller != null
           ? Stack(
               children: [
-                Positioned.fill(
-                  child: GestureDetector(
-                    onTapUp: (details) => _onFocusTap(details.globalPosition),
-                    onScaleUpdate: (details) {
-                      _onZoomChanged(_currentZoom * details.scale);
-                    },
-                    child: CameraPreview(_controller!),
-                  ),
-                ),
+                _buildCameraPreviewExpanded(),
                 if (_showGrid)
                   const Positioned.fill(
                     child: GridOverlay(),
@@ -522,6 +514,19 @@ class _CameraScreenState extends State<CameraScreen>
                 color: Colors.white,
               ),
             ),
+    );
+  }
+
+  Widget _buildCameraPreviewExpanded() {
+    return SizedBox.expand(
+      child: FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: _controller!.value.previewSize?.height ?? 1,
+          height: _controller!.value.previewSize?.width ?? 1,
+          child: CameraPreview(_controller!),
+        ),
+      ),
     );
   }
 }
