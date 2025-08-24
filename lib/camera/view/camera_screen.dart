@@ -18,7 +18,7 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
   bool _isInitialized = false;
@@ -30,11 +30,33 @@ class _CameraScreenState extends State<CameraScreen>
   bool _showGrid = true;
   bool _showMoreControls = false;
   Offset? _focusPoint;
+  bool _isFocusing = false;
+
+  // Animation controllers for focus indicator
+  late AnimationController _focusAnimationController;
+  late Animation<double> _focusAnimation;
+
+  // Zoom gesture tracking
+  double _baseZoom = 1;
+  bool _isZooming = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Initialize focus animation
+    _focusAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _focusAnimation = Tween<double>(begin: 1.0, end: 0.5).animate(
+      CurvedAnimation(
+        parent: _focusAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     _setFullScreen();
     _initializeCamera();
   }
@@ -42,6 +64,7 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _focusAnimationController.dispose();
     _restoreSystemUI();
     _controller?.dispose();
     super.dispose();
@@ -101,8 +124,9 @@ class _CameraScreenState extends State<CameraScreen>
 
     _controller = CameraController(
       _cameras[_selectedCameraIndex],
-      ResolutionPreset.high,
+      ResolutionPreset.veryHigh,
       enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
     );
 
     try {
@@ -110,10 +134,14 @@ class _CameraScreenState extends State<CameraScreen>
       _minZoom = await _controller!.getMinZoomLevel();
       _maxZoom = await _controller!.getMaxZoomLevel();
 
+      await _controller!.setFocusMode(FocusMode.auto);
+      await _controller!.setExposureMode(ExposureMode.auto);
+
       if (mounted) {
         setState(() {
           _isInitialized = true;
           _currentZoom = _minZoom;
+          _baseZoom = _minZoom;
         });
       }
     } catch (e) {
@@ -127,6 +155,11 @@ class _CameraScreenState extends State<CameraScreen>
     }
 
     try {
+      // Ensure autofocus before taking picture
+      if (!_isFocusing) {
+        await _controller!.setFocusMode(FocusMode.auto);
+      }
+
       final directory = await getTemporaryDirectory();
       final imagePath = path.join(
         directory.path,
@@ -193,34 +226,80 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
-  void _onFocusTap(Offset point) {
+  // Enhanced zoom handling for gesture detection
+  void _handleScaleStart(ScaleStartDetails details) {
+    _baseZoom = _currentZoom;
+    _isZooming = true;
+  }
+
+  void _handleScaleUpdate(ScaleUpdateDetails details) {
+    if (!_isZooming ||
+        _controller == null ||
+        !_controller!.value.isInitialized) {
+      return;
+    }
+
+    final newZoom = _baseZoom * details.scale;
+    _onZoomChanged(newZoom);
+  }
+
+  void _handleScaleEnd(ScaleEndDetails details) {
+    _isZooming = false;
+  }
+
+  // Enhanced autofocus with tap-to-focus
+  Future<void> _onFocusTap(TapUpDetails details) async {
     if (_controller == null || !_controller!.value.isInitialized) {
       return;
     }
 
-    final renderBox = context.findRenderObject()! as RenderBox;
-    final localPoint = renderBox.globalToLocal(point);
-    final size = renderBox.size;
-
-    final focusPoint = Offset(
-      localPoint.dx / size.width,
-      localPoint.dy / size.height,
-    );
-
-    _controller!.setFocusPoint(focusPoint);
-    _controller!.setExposurePoint(focusPoint);
-
     setState(() {
-      _focusPoint = localPoint;
+      _isFocusing = true;
     });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _focusPoint = null;
-        });
-      }
-    });
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final Offset localPoint = renderBox.globalToLocal(details.globalPosition);
+    final Size size = renderBox.size;
+
+    // Convert tap coordinates to camera coordinates (0.0 - 1.0)
+    final double x = localPoint.dx / size.width;
+    final double y = localPoint.dy / size.height;
+
+    final Offset focusPoint = Offset(x.clamp(0.0, 1.0), y.clamp(0.0, 1.0));
+
+    try {
+      // Set focus and exposure point
+      await _controller!.setFocusPoint(focusPoint);
+      await _controller!.setExposurePoint(focusPoint);
+
+      // Set focus mode to auto for better focusing
+      await _controller!.setFocusMode(FocusMode.auto);
+
+      // Update UI with focus indicator
+      setState(() {
+        _focusPoint = localPoint;
+      });
+
+      // Start focus animation
+      await _focusAnimationController.forward().then((_) {
+        _focusAnimationController.reverse();
+      });
+
+      // Hide focus indicator after 2 seconds
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _focusPoint = null;
+            _isFocusing = false;
+          });
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isFocusing = false;
+      });
+      _showErrorDialog('Failed to focus: $e');
+    }
   }
 
   void _toggleGrid() {
@@ -347,6 +426,71 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
+  // Enhanced focus indicator widget
+  Widget _buildFocusIndicator() {
+    if (_focusPoint == null) return const SizedBox.shrink();
+
+    return AnimatedBuilder(
+      animation: _focusAnimation,
+      builder: (context, child) {
+        return Positioned(
+          left: _focusPoint!.dx - 50,
+          top: _focusPoint!.dy - 50,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: _isFocusing ? Colors.yellow : Colors.green,
+                width: 2,
+              ),
+              color: Colors.transparent,
+            ),
+            child: _isFocusing
+                ? Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.yellow.withOpacity(_focusAnimation.value),
+                        ),
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+        );
+      },
+    );
+  }
+
+  // Zoom indicator widget
+  Widget _buildZoomIndicator() {
+    if (_currentZoom <= _minZoom + 0.1) return const SizedBox.shrink();
+
+    return Positioned(
+      bottom: 150,
+      left: 20,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          '${_currentZoom.toStringAsFixed(1)}x',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -354,24 +498,28 @@ class _CameraScreenState extends State<CameraScreen>
       body: _isInitialized && _controller != null
           ? Stack(
               children: [
-                _buildCameraPreviewExpanded(),
+                // Camera preview with gesture detection for zoom and focus
+                GestureDetector(
+                  onTapUp: _onFocusTap,
+                  onScaleStart: _handleScaleStart,
+                  onScaleUpdate: _handleScaleUpdate,
+                  onScaleEnd: _handleScaleEnd,
+                  child: _buildCameraPreviewExpanded(),
+                ),
+
+                // Grid overlay
                 if (_showGrid)
                   const Positioned.fill(
                     child: GridOverlay(),
                   ),
-                if (_focusPoint != null)
-                  Positioned(
-                    left: _focusPoint!.dx - 50,
-                    top: _focusPoint!.dy - 50,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.yellow, width: 2),
-                        color: Colors.transparent,
-                      ),
-                    ),
-                  ),
+
+                // Focus indicator
+                _buildFocusIndicator(),
+
+                // Zoom indicator
+                _buildZoomIndicator(),
+
+                // Top controls
                 Positioned(
                   top: 50,
                   left: 20,
@@ -417,9 +565,7 @@ class _CameraScreenState extends State<CameraScreen>
                               ),
                             ),
                           ),
-                          const SizedBox(
-                            width: 8,
-                          ),
+                          const SizedBox(width: 8),
                           GestureDetector(
                             onTap: _switchCamera,
                             child: Container(
@@ -443,6 +589,8 @@ class _CameraScreenState extends State<CameraScreen>
                     ],
                   ),
                 ),
+
+                // Right side controls
                 Positioned(
                   top: 120,
                   right: 20,
@@ -469,8 +617,7 @@ class _CameraScreenState extends State<CameraScreen>
                           ],
                         )
                       else
-                        SizedBox.shrink(),
-
+                        const SizedBox.shrink(),
                       if (_showMoreControls)
                         Column(
                           children: [
@@ -482,8 +629,7 @@ class _CameraScreenState extends State<CameraScreen>
                           ],
                         )
                       else
-                        SizedBox.shrink(),
-
+                        const SizedBox.shrink(),
                       GestureDetector(
                         onTap: _toggleMoreControls,
                         child: _buildRightSideControl(
@@ -497,6 +643,8 @@ class _CameraScreenState extends State<CameraScreen>
                     ],
                   ),
                 ),
+
+                // Bottom camera controls
                 Positioned(
                   bottom: 0,
                   left: 0,
