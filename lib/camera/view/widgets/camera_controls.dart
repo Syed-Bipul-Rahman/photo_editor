@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/core.dart';
+
 class CameraControls extends StatelessWidget {
   final VoidCallback onCapture;
   final VoidCallback onSwitchCamera;
@@ -138,7 +140,7 @@ class CameraControls extends StatelessWidget {
       width: 60,
       height: 60,
       child: SvgPicture.asset(
-        'assets/icons/albums_icon.svg',
+        AppIcons.albumsIcon,
         colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
       ),
     );
@@ -151,7 +153,7 @@ class CameraControls extends StatelessWidget {
         width: 80,
         height: 80,
         child: SvgPicture.asset(
-          'assets/icons/click_single_image.svg',
+          AppIcons.clickSingleImage,
           fit: BoxFit.cover,
         ),
       ),

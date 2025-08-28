@@ -10,6 +10,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_management_app/camera/view/widgets/camera_controls.dart';
 import 'package:photo_management_app/camera/view/widgets/grid_overlay.dart';
 
+import '../../core/core.dart';
+
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
 
@@ -534,7 +536,7 @@ class _CameraScreenState extends State<CameraScreen>
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: SvgPicture.asset(
-                            'assets/icons/burger.svg',
+                            AppIcons.burger,
                             colorFilter: const ColorFilter.mode(
                               Colors.white,
                               BlendMode.srcIn,
@@ -554,7 +556,7 @@ class _CameraScreenState extends State<CameraScreen>
                             child: Padding(
                               padding: const EdgeInsets.all(12),
                               child: SvgPicture.asset(
-                                'assets/icons/person.svg',
+                                AppIcons.person,
                                 colorFilter: const ColorFilter.mode(
                                   Colors.white,
                                   BlendMode.srcIn,
@@ -575,7 +577,7 @@ class _CameraScreenState extends State<CameraScreen>
                               child: Padding(
                                 padding: const EdgeInsets.all(10),
                                 child: Image.asset(
-                                  'assets/icons/switch_camera.png',
+                                  AppIcons.switchCamera,
                                   color: Colors.white,
                                 ),
                               ),
@@ -597,8 +599,8 @@ class _CameraScreenState extends State<CameraScreen>
                       _buildRightSideControl(
                         onTap: _toggleFlash,
                         iconPath: _isFlashOn
-                            ? 'assets/icons/flash_on.svg'
-                            : 'assets/icons/flash_off.svg',
+                            ? AppIcons.flashOn
+                            : AppIcons.flashOff,
                         label: 'Flash',
                       ),
                       const SizedBox(height: 30),
@@ -607,7 +609,7 @@ class _CameraScreenState extends State<CameraScreen>
                           children: [
                             _buildRightSideControl(
                               iconPath:
-                                  'assets/icons/copy_icon_that_represent_multi_click.svg',
+                                  AppIcons.copyIconThatRepresentMultiClick,
                               label: 'Multi Click',
                             ),
                             const SizedBox(height: 30),
@@ -619,7 +621,7 @@ class _CameraScreenState extends State<CameraScreen>
                         Column(
                           children: [
                             _buildRightSideControl(
-                              iconPath: 'assets/icons/timer_off.svg',
+                              iconPath: AppIcons.timerOff,
                               label: 'Timer',
                             ),
                             const SizedBox(height: 30),
@@ -631,8 +633,8 @@ class _CameraScreenState extends State<CameraScreen>
                         onTap: _toggleMoreControls,
                         child: _buildRightSideControl(
                           iconPath: _showMoreControls
-                              ? 'assets/icons/show_less_items.svg'
-                              : 'assets/icons/show_more_item.svg',
+                              ? AppIcons.showLessItems
+                              : AppIcons.showMoreItem,
                           label: '',
                           showLabel: false,
                         ),
@@ -665,8 +667,7 @@ class _CameraScreenState extends State<CameraScreen>
                     onZoomChanged: _onZoomChanged,
                     currentZoom: _currentZoom,
                     minZoom: _minZoom,
-                    // Add this line
-                    maxZoom: _maxZoom, // Add this line
+                    maxZoom: _maxZoom,
                   ),
                 ),
               ],
