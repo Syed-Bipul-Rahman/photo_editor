@@ -1,5 +1,5 @@
 name: photo_management_app
-description: A Very Good Project created by Very Good CLI.
+description: A Flutter photo management application.
 version: 1.0.0+1
 publish_to: none
 
@@ -18,14 +18,25 @@ dependencies:
   permission_handler: ^11.3.1
   path_provider: ^2.1.4
   path: ^1.9.0
+  flutter_svg:
+  google_fonts:
+  camerawesome: ^2.5.0
+  open_filex:
+
 
 dev_dependencies:
   bloc_test: ^10.0.0
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.4
-  very_good_analysis: ^9.0.0
+
+
 
 flutter:
   generate: true
   uses-material-design: true
+
+  assets:
+    - assets/
+    - assets/icons/
+    - assets/images/
