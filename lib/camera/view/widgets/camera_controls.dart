@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CameraControls extends StatelessWidget {
   final VoidCallback onCapture;
@@ -15,7 +17,7 @@ class CameraControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 150,
+      height: 200,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -27,14 +29,42 @@ class CameraControls extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Column(
           children: [
-            _buildGalleryButton(),
-            _buildCaptureButton(),
-            _buildSwitchCameraButton(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildZoomButton('0.6'),
+                const SizedBox(width: 20),
+                _buildZoomButton('1X', isSelected: true),
+                const SizedBox(width: 20),
+                _buildZoomButton('2'),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Column(
+                  children: [
+                    _buildGalleryButton(),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Albums',
+                      style: GoogleFonts.publicSans(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        color: const Color(0xFFFFFFFF),
+                      ),
+                    ),
+                  ],
+                ),
+                _buildCaptureButton(),
+                _buildRecentClicks(),
+              ],
+            ),
           ],
         ),
       ),
@@ -42,18 +72,20 @@ class CameraControls extends StatelessWidget {
   }
 
   Widget _buildGalleryButton() {
-    return Container(
+    return SizedBox(
       width: 60,
       height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Icon(
-        Icons.photo_library,
-        color: Colors.white,
-        size: 28,
+      // decoration: BoxDecoration(
+      //   color: Colors.white.withValues(alpha: 0.2),
+      //   borderRadius: BorderRadius.circular(8),
+      //   border: Border.all(
+      //     color: Colors.white.withValues(alpha: 0.3),
+      //     width: 1,
+      //   ),
+      // ),
+      child: SvgPicture.asset(
+        'assets/icons/albums_icon.svg',
+        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
       ),
     );
   }
@@ -64,45 +96,54 @@ class CameraControls extends StatelessWidget {
       child: Container(
         width: 80,
         height: 80,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          border: Border.all(color: Colors.grey.shade300, width: 4),
-        ),
-        child: Container(
-          margin: const EdgeInsets.all(6),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-          ),
+        child: SvgPicture.asset(
+          'assets/icons/click_single_image.svg',
+          fit: BoxFit.cover,
         ),
       ),
     );
   }
 
-  Widget _buildSwitchCameraButton() {
-    return GestureDetector(
-      onTap: canSwitchCamera ? onSwitchCamera : null,
-      child: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          color: canSwitchCamera 
-              ? Colors.white.withValues(alpha: 0.2)
-              : Colors.grey.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: canSwitchCamera 
-                ? Colors.white.withValues(alpha: 0.3)
-                : Colors.grey.withValues(alpha: 0.3),
-            width: 1,
-          ),
+  Widget _buildZoomButton(String label, {bool isSelected = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? Colors.white.withValues(alpha: 0.3)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.3),
+          width: 1,
         ),
-        child: Icon(
-          Icons.flip_camera_ios,
-          color: canSwitchCamera ? Colors.white : Colors.grey,
-          size: 28,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
+      ),
+    );
+  }
+
+  Widget _buildRecentClicks() {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Image.asset(
+        'assets/images/for_preview_delete_this_later.png',
+        fit: BoxFit.cover,
       ),
     );
   }
