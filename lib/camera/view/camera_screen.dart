@@ -508,10 +508,7 @@ class _CameraScreenState extends State<CameraScreen>
                 ),
 
                 // Grid overlay
-                if (_showGrid)
-                  const Positioned.fill(
-                    child: GridOverlay(),
-                  ),
+                if (_showGrid) const Positioned.fill(child: GridOverlay()),
 
                 // Focus indicator
                 _buildFocusIndicator(),
@@ -645,6 +642,18 @@ class _CameraScreenState extends State<CameraScreen>
                 ),
 
                 // Bottom camera controls
+                // Positioned(
+                //   bottom: 0,
+                //   left: 0,
+                //   right: 0,
+                //   child: CameraControls(
+                //     onCapture: _takePicture,
+                //     onSwitchCamera: _switchCamera,
+                //     canSwitchCamera: _cameras.length > 1,
+                //     onZoomChanged: _onZoomChanged,
+                //     currentZoom: _currentZoom,
+                //   ),
+                // ),
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -653,15 +662,16 @@ class _CameraScreenState extends State<CameraScreen>
                     onCapture: _takePicture,
                     onSwitchCamera: _switchCamera,
                     canSwitchCamera: _cameras.length > 1,
+                    onZoomChanged: _onZoomChanged,
+                    currentZoom: _currentZoom,
+                    minZoom: _minZoom,
+                    // Add this line
+                    maxZoom: _maxZoom, // Add this line
                   ),
                 ),
               ],
             )
-          : const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-              ),
-            ),
+          : const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
   }
 
