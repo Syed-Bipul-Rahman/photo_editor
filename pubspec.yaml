@@ -28,6 +28,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.13.1
 
 
 
@@ -39,3 +40,14 @@ flutter:
     - assets/
     - assets/icons/
     - assets/images/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  
+  # Android adaptive icon
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/images/logo.png"
