@@ -196,7 +196,7 @@ class CameraControls extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
       ),
       child: Image.asset(
-        'assets/images/for_preview_delete_this_later.png',
+        AppImages.forPreviewDeleteThisLater,
         fit: BoxFit.cover,
       ),
     );
