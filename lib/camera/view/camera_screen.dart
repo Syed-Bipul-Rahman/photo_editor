@@ -34,9 +34,18 @@ class _CameraScreenState extends State<CameraScreen>
   Offset? _focusPoint;
   bool _isFocusing = false;
 
+  // Menu state
+  bool _showMenu = false;
+  String _selectedAspectRatio = '3:4';
+  String _selectedTimer = 'Off';
+
   // Animation controllers for focus indicator
   late AnimationController _focusAnimationController;
   late Animation<double> _focusAnimation;
+
+  // Menu animation controller
+  late AnimationController _menuAnimationController;
+  late Animation<Offset> _menuSlideAnimation;
 
   // Zoom gesture tracking
   double _baseZoom = 1;
@@ -59,6 +68,19 @@ class _CameraScreenState extends State<CameraScreen>
       ),
     );
 
+    // Initialize menu animation
+    _menuAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _menuSlideAnimation =
+        Tween<Offset>(begin: const Offset(-1.0, 0.0), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _menuAnimationController,
+            curve: Curves.easeInOut,
+          ),
+        );
+
     _setFullScreen();
     _initializeCamera();
   }
@@ -67,6 +89,7 @@ class _CameraScreenState extends State<CameraScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _focusAnimationController.dispose();
+    _menuAnimationController.dispose();
     _restoreSystemUI();
     _controller?.dispose();
     super.dispose();
@@ -148,6 +171,18 @@ class _CameraScreenState extends State<CameraScreen>
       }
     } catch (e) {
       _showErrorDialog('Failed to initialize camera controller: $e');
+    }
+  }
+
+  void _toggleMenu() {
+    setState(() {
+      _showMenu = !_showMenu;
+    });
+
+    if (_showMenu) {
+      _menuAnimationController.forward();
+    } else {
+      _menuAnimationController.reverse();
     }
   }
 
@@ -251,7 +286,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   // Enhanced autofocus with tap-to-focus
   Future<void> _onFocusTap(TapUpDetails details) async {
-    if (_controller == null || !_controller!.value.isInitialized) {
+    if (_controller == null || !_controller!.value.isInitialized || _showMenu) {
       return;
     }
 
@@ -430,7 +465,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   // Enhanced focus indicator widget
   Widget _buildFocusIndicator() {
-    if (_focusPoint == null) return const SizedBox.shrink();
+    if (_focusPoint == null || _showMenu) return const SizedBox.shrink();
 
     return AnimatedBuilder(
       animation: _focusAnimation,
@@ -470,7 +505,8 @@ class _CameraScreenState extends State<CameraScreen>
 
   // Zoom indicator widget
   Widget _buildZoomIndicator() {
-    if (_currentZoom <= _minZoom + 0.1) return const SizedBox.shrink();
+    if (_currentZoom <= _minZoom + 0.1 || _showMenu)
+      return const SizedBox.shrink();
 
     return Positioned(
       bottom: 150,
@@ -493,6 +529,264 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
+  Widget _buildSlideOutMenu() {
+    return SlideTransition(
+      position: _menuSlideAnimation,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.85,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.9),
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Aspect ratio selection
+                const SizedBox(height: 20),
+                _buildAspectRatioSelector(),
+                const SizedBox(height: 30),
+
+                // Timer selection
+                _buildTimerSelector(),
+                const SizedBox(height: 40),
+
+                // Menu items
+                _buildMenuItem(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Albums',
+                  onTap: () {
+                    // Navigate to albums
+                    _toggleMenu();
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildMenuItem(
+                  icon: Icons.timeline,
+                  label: 'Timeline',
+                  onTap: () {
+                    // Navigate to timeline
+                    _toggleMenu();
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildMenuItem(
+                  icon: Icons.favorite_border,
+                  label: 'Favorites',
+                  onTap: () {
+                    // Navigate to favorites
+                    _toggleMenu();
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildMenuItem(
+                  icon: Icons.delete_outline,
+                  label: 'Trash',
+                  onTap: () {
+                    // Navigate to trash
+                    _toggleMenu();
+                  },
+                ),
+                const Spacer(),
+
+                // Bottom menu items
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildBottomMenuItem(
+                      icon: Icons.settings,
+                      label: 'Setting',
+                      onTap: () {
+                        // Navigate to settings
+                        _toggleMenu();
+                      },
+                    ),
+                    _buildBottomMenuItem(
+                      icon: Icons.message_outlined,
+                      label: 'Message',
+                      onTap: () {
+                        // Navigate to messages
+                        _toggleMenu();
+                      },
+                    ),
+                    _buildBottomMenuItem(
+                      icon: Icons.person_outline,
+                      label: 'Profile',
+                      onTap: () {
+                        // Navigate to profile
+                        _toggleMenu();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAspectRatioSelector() {
+    final aspectRatios = ['1:1', '3:4', '9:16', 'Full'];
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: aspectRatios.map((ratio) {
+          final isSelected = _selectedAspectRatio == ratio;
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedAspectRatio = ratio;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF00BCD4)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                ratio,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildTimerSelector() {
+    final timers = ['Off', '3S', '5S', '10S'];
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: timers.map((timer) {
+          final isSelected = _selectedTimer == timer;
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedTimer = timer;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.grey.withOpacity(0.6)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                timer,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -510,7 +804,8 @@ class _CameraScreenState extends State<CameraScreen>
                 ),
 
                 // Grid overlay
-                if (_showGrid) const Positioned.fill(child: GridOverlay()),
+                if (_showGrid && !_showMenu)
+                  const Positioned.fill(child: GridOverlay()),
 
                 // Focus indicator
                 _buildFocusIndicator(),
@@ -518,45 +813,28 @@ class _CameraScreenState extends State<CameraScreen>
                 // Zoom indicator
                 _buildZoomIndicator(),
 
-                // Top controls
-                Positioned(
-                  top: 50,
-                  left: 20,
-                  right: 20,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: SvgPicture.asset(
-                            AppIcons.burger,
-                            colorFilter: const ColorFilter.mode(
-                              Colors.white,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Container(
+                // Top controls - hide when menu is shown
+                if (!_showMenu)
+                  Positioned(
+                    top: 50,
+                    left: 20,
+                    right: 20,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: _toggleMenu,
+                          child: Container(
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(22),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(12),
                               child: SvgPicture.asset(
-                                AppIcons.person,
+                                AppIcons.burger,
                                 colorFilter: const ColorFilter.mode(
                                   Colors.white,
                                   BlendMode.srcIn,
@@ -564,112 +842,141 @@ class _CameraScreenState extends State<CameraScreen>
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: _switchCamera,
-                            child: Container(
+                        ),
+                        Row(
+                          children: [
+                            Container(
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(22),
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Image.asset(
-                                  AppIcons.switchCamera,
-                                  color: Colors.white,
+                                padding: const EdgeInsets.all(12),
+                                child: SvgPicture.asset(
+                                  AppIcons.person,
+                                  colorFilter: const ColorFilter.mode(
+                                    Colors.white,
+                                    BlendMode.srcIn,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: _switchCamera,
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Image.asset(
+                                    AppIcons.switchCamera,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                // Right side controls
-                Positioned(
-                  top: 120,
-                  right: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildRightSideControl(
-                        onTap: _toggleFlash,
-                        iconPath: _isFlashOn
-                            ? AppIcons.flashOn
-                            : AppIcons.flashOff,
-                        label: 'Flash',
-                      ),
-                      const SizedBox(height: 30),
-                      if (_showMoreControls)
-                        Column(
-                          children: [
-                            _buildRightSideControl(
-                              iconPath:
-                                  AppIcons.copyIconThatRepresentMultiClick,
-                              label: 'Multi Click',
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-                        )
-                      else
-                        const SizedBox.shrink(),
-                      if (_showMoreControls)
-                        Column(
-                          children: [
-                            _buildRightSideControl(
-                              iconPath: AppIcons.timerOff,
-                              label: 'Timer',
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-                        )
-                      else
-                        const SizedBox.shrink(),
-                      GestureDetector(
-                        onTap: _toggleMoreControls,
-                        child: _buildRightSideControl(
-                          iconPath: _showMoreControls
-                              ? AppIcons.showLessItems
-                              : AppIcons.showMoreItem,
-                          label: '',
-                          showLabel: false,
+                // Right side controls - hide when menu is shown
+                if (!_showMenu)
+                  Positioned(
+                    top: 120,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _buildRightSideControl(
+                          onTap: _toggleFlash,
+                          iconPath: _isFlashOn
+                              ? AppIcons.flashOn
+                              : AppIcons.flashOff,
+                          label: 'Flash',
+                        ),
+                        const SizedBox(height: 30),
+                        if (_showMoreControls)
+                          Column(
+                            children: [
+                              _buildRightSideControl(
+                                iconPath:
+                                    AppIcons.copyIconThatRepresentMultiClick,
+                                label: 'Multi Click',
+                              ),
+                              const SizedBox(height: 30),
+                            ],
+                          )
+                        else
+                          const SizedBox.shrink(),
+                        if (_showMoreControls)
+                          Column(
+                            children: [
+                              _buildRightSideControl(
+                                iconPath: AppIcons.timerOff,
+                                label: 'Timer',
+                              ),
+                              const SizedBox(height: 30),
+                            ],
+                          )
+                        else
+                          const SizedBox.shrink(),
+                        GestureDetector(
+                          onTap: _toggleMoreControls,
+                          child: _buildRightSideControl(
+                            iconPath: _showMoreControls
+                                ? AppIcons.showLessItems
+                                : AppIcons.showMoreItem,
+                            label: '',
+                            showLabel: false,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Bottom controls - hide when menu is shown
+                if (!_showMenu)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: CameraControls(
+                      onCapture: _takePicture,
+                      onSwitchCamera: _switchCamera,
+                      canSwitchCamera: _cameras.length > 1,
+                      onZoomChanged: _onZoomChanged,
+                      currentZoom: _currentZoom,
+                      minZoom: _minZoom,
+                      maxZoom: _maxZoom,
+                    ),
+                  ),
+
+                // Slide-out menu
+                if (_showMenu)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: _toggleMenu,
+                      child: Container(
+                        color: Colors.black.withOpacity(0.3),
+                        child: GestureDetector(
+                          onTap: () {}, // Prevent closing when tapping on menu
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: _buildSlideOutMenu(),
+                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-
-                // Bottom camera controls
-                // Positioned(
-                //   bottom: 0,
-                //   left: 0,
-                //   right: 0,
-                //   child: CameraControls(
-                //     onCapture: _takePicture,
-                //     onSwitchCamera: _switchCamera,
-                //     canSwitchCamera: _cameras.length > 1,
-                //     onZoomChanged: _onZoomChanged,
-                //     currentZoom: _currentZoom,
-                //   ),
-                // ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: CameraControls(
-                    onCapture: _takePicture,
-                    onSwitchCamera: _switchCamera,
-                    canSwitchCamera: _cameras.length > 1,
-                    onZoomChanged: _onZoomChanged,
-                    currentZoom: _currentZoom,
-                    minZoom: _minZoom,
-                    maxZoom: _maxZoom,
-                  ),
-                ),
               ],
             )
           : const Center(child: CircularProgressIndicator(color: Colors.white)),
