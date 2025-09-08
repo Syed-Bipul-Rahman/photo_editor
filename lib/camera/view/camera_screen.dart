@@ -33,6 +33,7 @@ class _CameraScreenState extends State<CameraScreen>
   String _selectedTimer = 'Off';
 
   late AnimationController _menuAnimationController;
+  late AnimationController _flashAnimationController;
 
   @override
   void initState() {
@@ -50,6 +51,11 @@ class _CameraScreenState extends State<CameraScreen>
       vsync: this,
     );
 
+    _flashAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
     SystemUIManager.setFullScreen();
     _initializeCamera();
   }
@@ -59,6 +65,7 @@ class _CameraScreenState extends State<CameraScreen>
     WidgetsBinding.instance.removeObserver(this);
     _focusZoomController.dispose();
     _menuAnimationController.dispose();
+    _flashAnimationController.dispose();
     SystemUIManager.restoreSystemUI();
     _cameraStateManager.dispose();
     super.dispose();
@@ -108,13 +115,17 @@ class _CameraScreenState extends State<CameraScreen>
 
   Future<void> _takePicture() async {
     try {
-      final imagePath = await _cameraStateManager.takePicture();
-      
-      await _savePictureToDatabase(imagePath);
-      
+      // Trigger flash animation and sound
       if (mounted) {
+        _flashAnimationController.forward().then((_) {
+          _flashAnimationController.reverse();
+        });
         CameraDialogs.playClickSound();
       }
+
+      final imagePath = await _cameraStateManager.takePicture();
+
+      await _savePictureToDatabase(imagePath);
     } catch (e) {
       if (mounted) {
         CameraDialogs.showErrorDialog(context, 'Failed to take picture: $e');
@@ -126,7 +137,7 @@ class _CameraScreenState extends State<CameraScreen>
     try {
       final file = File(imagePath);
       final fileStats = await file.stat();
-      
+
       final photo = Photo(
         path: imagePath,
         takenDate: DateTime.now(),
@@ -311,6 +322,22 @@ class _CameraScreenState extends State<CameraScreen>
                         setState(() {
                           _selectedTimer = timer;
                         });
+                      },
+                    ),
+
+                    // Flash overlay
+                    AnimatedBuilder(
+                      animation: _flashAnimationController,
+                      builder: (context, child) {
+                        return _flashAnimationController.value > 0
+                            ? Positioned.fill(
+                                child: Container(
+                                  color: Colors.black.withValues(
+                                    alpha: _flashAnimationController.value,
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink();
                       },
                     ),
                   ],
