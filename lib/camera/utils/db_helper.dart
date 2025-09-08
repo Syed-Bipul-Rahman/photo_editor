@@ -3,26 +3,11 @@
 * Author     : Syed Bipul Rahman
 * github     : @Syed-bipul-rahman
 * All right reserved
-*
 * */
 import 'dart:io';
 
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-
-import 'log_helper.dart';
-
-// Base model interface for type safety
-/*
-* Created by : Syed Bipul Rahman
-* Author     : Syed Bipul Rahman
-* github     : @Syed-bipul-rahman
-* All right reserved
-*
-* */
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
-
 import 'log_helper.dart';
 
 // Base model interface for type safety

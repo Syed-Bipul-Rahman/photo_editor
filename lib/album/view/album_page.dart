@@ -7,6 +7,7 @@ import '../../camera/models/photo_model.dart';
 import '../../camera/utils/db_helper.dart';
 import '../../utils/app_bar.dart';
 import '../cubit/counter_cubit.dart';
+import 'fullscreen_image_viewer.dart';
 
 class AlbumPage extends StatelessWidget {
   const AlbumPage({super.key});
@@ -262,8 +263,19 @@ class _AlbumViewState extends State<AlbumView> {
                         final photo = _photos[index];
                         return GestureDetector(
                           onTap: () {
-                            // Handle image tap (e.g., open full screen view)
-                            print('Image tapped: ${photo.path}');
+                            Navigator.of(context).push(
+                              PageRouteBuilder(
+                                pageBuilder: (context, animation, secondaryAnimation) =>
+                                    FullscreenImageViewer(photo: photo),
+                                transitionDuration: const Duration(milliseconds: 300),
+                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
+                              ),
+                            );
                           },
                           child: Hero(
                             tag: 'photo_${photo.id}',
