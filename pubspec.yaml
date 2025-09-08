@@ -21,7 +21,7 @@ dependencies:
   flutter_svg:
   google_fonts:
   sqflite:
-
+  logger:
 
 dev_dependencies:
   bloc_test: ^10.0.0

@@ -1,10 +1,13 @@
 // CameraController needed for UI components
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:photo_management_app/camera/controllers/focus_zoom_controller.dart';
+import 'package:photo_management_app/camera/models/photo_model.dart';
 import 'package:photo_management_app/camera/services/camera_state_manager.dart'
     as camera_service;
 import 'package:photo_management_app/camera/services/system_ui_manager.dart';
 import 'package:photo_management_app/camera/utils/camera_dialogs.dart';
+import 'package:photo_management_app/camera/utils/db_helper.dart';
 import 'package:photo_management_app/camera/view/widgets/camera_controls.dart';
 import 'package:photo_management_app/camera/view/widgets/grid_overlay.dart';
 import 'package:photo_management_app/camera/widgets/camera_ui_components.dart';
@@ -21,6 +24,7 @@ class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
   late camera_service.CameraStateManager _cameraStateManager;
   late FocusZoomController _focusZoomController;
+  late DatabaseHelper _databaseHelper;
 
   bool _showGrid = true;
   bool _showMoreControls = false;
@@ -37,6 +41,7 @@ class _CameraScreenState extends State<CameraScreen>
 
     _cameraStateManager = camera_service.CameraStateManager();
     _focusZoomController = FocusZoomController(_cameraStateManager);
+    _databaseHelper = DatabaseHelper(dbName: 'photo_management.db');
 
     _focusZoomController.initializeFocusAnimation(this);
 
@@ -104,6 +109,9 @@ class _CameraScreenState extends State<CameraScreen>
   Future<void> _takePicture() async {
     try {
       final imagePath = await _cameraStateManager.takePicture();
+      
+      await _savePictureToDatabase(imagePath);
+      
       if (mounted) {
         CameraDialogs.showImageTakenSnackBar(context, imagePath);
       }
@@ -111,6 +119,23 @@ class _CameraScreenState extends State<CameraScreen>
       if (mounted) {
         CameraDialogs.showErrorDialog(context, 'Failed to take picture: $e');
       }
+    }
+  }
+
+  Future<void> _savePictureToDatabase(String imagePath) async {
+    try {
+      final file = File(imagePath);
+      final fileStats = await file.stat();
+      
+      final photo = Photo(
+        path: imagePath,
+        takenDate: DateTime.now(),
+        fileSize: fileStats.size,
+      );
+
+      await _databaseHelper.insertModel(photo);
+    } catch (e) {
+      print('Failed to save picture to database: $e');
     }
   }
 
