@@ -22,6 +22,8 @@ dependencies:
   google_fonts:
   sqflite:
   logger:
+  flutter_cache_manager:
+  visibility_detector:
 
 dev_dependencies:
   bloc_test: ^10.0.0
@@ -40,6 +42,7 @@ flutter:
     - assets/
     - assets/icons/
     - assets/images/
+    - assets/sound/
 
 flutter_launcher_icons:
   android: "launcher_icon"

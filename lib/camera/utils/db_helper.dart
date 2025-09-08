@@ -5,6 +5,21 @@
 * All right reserved
 *
 * */
+import 'dart:io';
+
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+
+import 'log_helper.dart';
+
+// Base model interface for type safety
+/*
+* Created by : Syed Bipul Rahman
+* Author     : Syed Bipul Rahman
+* github     : @Syed-bipul-rahman
+* All right reserved
+*
+* */
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -485,6 +500,363 @@ class DatabaseHelper {
     } catch (e) {
       throw DatabaseException('Failed to close database: $e');
     }
+  }
+
+  // ========== PHOTO-SPECIFIC OPTIMIZED METHODS ==========
+
+  /// Get photos with pagination - optimized for large datasets
+  Future<List<Map<String, dynamic>>> getPhotosPaginated({
+    int limit = 50,
+    int offset = 0,
+    String? orderBy = 'taken_date DESC',
+    String? where,
+    List<dynamic>? whereArgs,
+  }) async {
+    try {
+      LoggerHelper.info(
+        "==========>> Loading photos: limit=$limit, offset=$offset <<==========",
+      );
+
+      final stopwatch = Stopwatch()..start();
+
+      final results = await query(
+        'photos',
+        orderBy: orderBy,
+        limit: limit,
+        offset: offset,
+        where: where,
+        whereArgs: whereArgs,
+      );
+
+      stopwatch.stop();
+      LoggerHelper.info(
+        "==========>> Loaded ${results.length} photos in ${stopwatch.elapsedMilliseconds}ms <<==========",
+      );
+
+      return results;
+    } catch (e) {
+      LoggerHelper.error('Error loading paginated photos: $e');
+      throw DatabaseException('Failed to load paginated photos: $e');
+    }
+  }
+
+  /// Get total photo count for progress tracking
+  Future<int> getPhotoCount({String? where, List<dynamic>? whereArgs}) async {
+    try {
+      return await count('photos', where: where, whereArgs: whereArgs);
+    } catch (e) {
+      LoggerHelper.error('Error getting photo count: $e');
+      return 0;
+    }
+  }
+
+  /// Get photos grouped by date for better organization
+  Future<Map<String, List<Map<String, dynamic>>>> getPhotosGroupedByDate({
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      final photos = await getPhotosPaginated(limit: limit, offset: offset);
+
+      final Map<String, List<Map<String, dynamic>>> groupedPhotos = {};
+
+      for (final photo in photos) {
+        final takenDate = photo['taken_date'];
+        if (takenDate != null) {
+          final dateKey = _formatDateKey(DateTime.parse(takenDate.toString()));
+          if (!groupedPhotos.containsKey(dateKey)) {
+            groupedPhotos[dateKey] = [];
+          }
+          groupedPhotos[dateKey]!.add(photo);
+        }
+      }
+
+      return groupedPhotos;
+    } catch (e) {
+      LoggerHelper.error('Error getting grouped photos: $e');
+      return {};
+    }
+  }
+
+  /// Search photos by metadata (path, name, etc.)
+  Future<List<Map<String, dynamic>>> searchPhotos({
+    required String searchTerm,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      final searchPattern = '%${searchTerm.toLowerCase()}%';
+
+      return await query(
+        'photos',
+        where: 'LOWER(path) LIKE ? OR LOWER(location) LIKE ?',
+        whereArgs: [searchPattern, searchPattern],
+        orderBy: 'taken_date DESC',
+        limit: limit,
+        offset: offset,
+      );
+    } catch (e) {
+      LoggerHelper.error('Error searching photos: $e');
+      return [];
+    }
+  }
+
+  /// Get photos within a date range
+  Future<List<Map<String, dynamic>>> getPhotosInDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      return await query(
+        'photos',
+        where: 'taken_date BETWEEN ? AND ?',
+        whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
+        orderBy: 'taken_date DESC',
+        limit: limit,
+        offset: offset,
+      );
+    } catch (e) {
+      LoggerHelper.error('Error getting photos in date range: $e');
+      return [];
+    }
+  }
+
+  /// Check if photo exists by path (to avoid duplicates)
+  Future<bool> photoExists(String path) async {
+    try {
+      final result = await findFirst(
+        'photos',
+        where: 'path = ?',
+        whereArgs: [path],
+      );
+      return result != null;
+    } catch (e) {
+      LoggerHelper.error('Error checking photo existence: $e');
+      return false;
+    }
+  }
+
+  /// Batch insert photos with conflict resolution
+  Future<List<int>> bulkInsertPhotos(
+    List<Map<String, dynamic>> photos, {
+    ConflictAlgorithm conflictAlgorithm = ConflictAlgorithm.ignore,
+  }) async {
+    try {
+      final db = await database;
+      final results = <int>[];
+
+      final stopwatch = Stopwatch()..start();
+
+      await db.transaction((txn) async {
+        for (final photo in photos) {
+          try {
+            final result = await txn.insert(
+              'photos',
+              photo,
+              conflictAlgorithm: conflictAlgorithm,
+            );
+            results.add(result);
+          } catch (e) {
+            LoggerHelper.error('Error inserting photo: $e');
+            results.add(-1); // Indicate failure
+          }
+        }
+      });
+
+      stopwatch.stop();
+      final successCount = results.where((id) => id != -1).length;
+
+      LoggerHelper.info(
+        "==========>> Bulk inserted $successCount/${photos.length} photos in ${stopwatch.elapsedMilliseconds}ms <<==========",
+      );
+
+      return results;
+    } catch (e) {
+      throw DatabaseException('Failed to bulk insert photos: $e');
+    }
+  }
+
+  /// Get database statistics for monitoring
+  Future<Map<String, dynamic>> getDatabaseStats() async {
+    try {
+      final db = await database;
+      final stats = <String, dynamic>{};
+
+      // Get photo count
+      stats['totalPhotos'] = await getPhotoCount();
+
+      // Get database size
+      final dbPath = db.path;
+      if (dbPath != null) {
+        try {
+          final file = File(dbPath);
+          stats['databaseSizeBytes'] = await file.length();
+          stats['databaseSizeMB'] = (stats['databaseSizeBytes'] / (1024 * 1024))
+              .toStringAsFixed(2);
+        } catch (e) {
+          stats['databaseSizeBytes'] = 0;
+          stats['databaseSizeMB'] = '0.00';
+        }
+      }
+
+      // Get earliest and latest photo dates
+      try {
+        final earliest = await findFirst('photos', orderBy: 'taken_date ASC');
+        final latest = await findFirst('photos', orderBy: 'taken_date DESC');
+
+        stats['earliestPhoto'] = earliest?['taken_date'];
+        stats['latestPhoto'] = latest?['taken_date'];
+      } catch (e) {
+        stats['earliestPhoto'] = null;
+        stats['latestPhoto'] = null;
+      }
+
+      return stats;
+    } catch (e) {
+      LoggerHelper.error('Error getting database stats: $e');
+      return {};
+    }
+  }
+
+  /// Cleanup orphaned photo records (photos that don't exist on disk)
+  Future<int> cleanupOrphanedPhotos() async {
+    try {
+      final db = await database;
+      int deletedCount = 0;
+
+      // Get all photos
+      final allPhotos = await query('photos', columns: ['id', 'path']);
+
+      await db.transaction((txn) async {
+        for (final photo in allPhotos) {
+          final path = photo['path'] as String;
+          final file = File(path);
+
+          if (!await file.exists()) {
+            await txn.delete(
+              'photos',
+              where: 'id = ?',
+              whereArgs: [photo['id']],
+            );
+            deletedCount++;
+          }
+        }
+      });
+
+      LoggerHelper.info(
+        "==========>> Cleaned up $deletedCount orphaned photo records <<==========",
+      );
+
+      return deletedCount;
+    } catch (e) {
+      LoggerHelper.error('Error cleaning up orphaned photos: $e');
+      throw DatabaseException('Failed to cleanup orphaned photos: $e');
+    }
+  }
+
+  /// Optimize database by running VACUUM and ANALYZE
+  Future<void> optimizeDatabase() async {
+    try {
+      final db = await database;
+      final stopwatch = Stopwatch()..start();
+
+      LoggerHelper.info(
+        "==========>> Starting database optimization <<==========",
+      );
+
+      // Run VACUUM to reclaim space and defragment
+      await db.execute('VACUUM');
+
+      // Run ANALYZE to update query planner statistics
+      await db.execute('ANALYZE');
+
+      stopwatch.stop();
+      LoggerHelper.info(
+        "==========>> Database optimization completed in ${stopwatch.elapsedMilliseconds}ms <<==========",
+      );
+    } catch (e) {
+      LoggerHelper.error('Error optimizing database: $e');
+      throw DatabaseException('Failed to optimize database: $e');
+    }
+  }
+
+  /// Create indexes for better query performance
+  Future<void> createPhotoIndexes() async {
+    try {
+      final db = await database;
+
+      // Index on taken_date for chronological ordering
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_photos_taken_date ON photos(taken_date DESC)',
+      );
+
+      // Index on path for duplicate checking
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_photos_path ON photos(path)',
+      );
+
+      // Index on location for searching
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_photos_location ON photos(location)',
+      );
+
+      // Composite index for date range queries
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_photos_date_range ON photos(taken_date, id)',
+      );
+
+      LoggerHelper.info(
+        "==========>> Photo indexes created successfully <<==========",
+      );
+    } catch (e) {
+      LoggerHelper.error('Error creating photo indexes: $e');
+      throw DatabaseException('Failed to create photo indexes: $e');
+    }
+  }
+
+  // Helper method to format date keys for grouping
+  String _formatDateKey(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final photoDate = DateTime(date.year, date.month, date.day);
+
+    if (photoDate == today) {
+      return 'Today';
+    } else if (photoDate == yesterday) {
+      return 'Yesterday';
+    } else if (now.difference(date).inDays < 7) {
+      return '${_getDayName(date.weekday)} ${date.day}/${date.month}';
+    } else if (date.year == now.year) {
+      return '${_getMonthName(date.month)} ${date.day}';
+    } else {
+      return '${_getMonthName(date.month)} ${date.day}, ${date.year}';
+    }
+  }
+
+  String _getDayName(int weekday) {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days[weekday - 1];
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 }
 
