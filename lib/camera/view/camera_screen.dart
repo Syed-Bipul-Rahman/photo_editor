@@ -113,7 +113,7 @@ class _CameraScreenState extends State<CameraScreen>
       await _savePictureToDatabase(imagePath);
       
       if (mounted) {
-        CameraDialogs.showImageTakenSnackBar(context, imagePath);
+        CameraDialogs.playClickSound();
       }
     } catch (e) {
       if (mounted) {
