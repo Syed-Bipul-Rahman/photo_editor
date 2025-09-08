@@ -1,14 +1,17 @@
+// CameraController needed for UI components
 import 'dart:io';
-
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:photo_management_app/camera/controllers/focus_zoom_controller.dart';
+import 'package:photo_management_app/camera/models/photo_model.dart';
+import 'package:photo_management_app/camera/services/camera_state_manager.dart'
+    as camera_service;
+import 'package:photo_management_app/camera/services/system_ui_manager.dart';
+import 'package:photo_management_app/camera/utils/camera_dialogs.dart';
+import 'package:photo_management_app/camera/utils/db_helper.dart';
 import 'package:photo_management_app/camera/view/widgets/camera_controls.dart';
 import 'package:photo_management_app/camera/view/widgets/grid_overlay.dart';
+import 'package:photo_management_app/camera/widgets/camera_ui_components.dart';
+import 'package:photo_management_app/camera/widgets/slide_out_menu.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -19,286 +22,185 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
-  CameraController? _controller;
-  List<CameraDescription> _cameras = [];
-  bool _isInitialized = false;
-  bool _isFlashOn = false;
-  int _selectedCameraIndex = 0;
-  double _currentZoom = 1;
-  double _minZoom = 1;
-  double _maxZoom = 1;
+  late camera_service.CameraStateManager _cameraStateManager;
+  late FocusZoomController _focusZoomController;
+  late DatabaseHelper _databaseHelper;
+
   bool _showGrid = true;
   bool _showMoreControls = false;
-  Offset? _focusPoint;
-  bool _isFocusing = false;
+  bool _showMenu = false;
+  String _selectedAspectRatio = '3:4';
+  String _selectedTimer = 'Off';
 
-  // Animation controllers for focus indicator
-  late AnimationController _focusAnimationController;
-  late Animation<double> _focusAnimation;
-
-  // Zoom gesture tracking
-  double _baseZoom = 1;
-  bool _isZooming = false;
+  late AnimationController _menuAnimationController;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Initialize focus animation
-    _focusAnimationController = AnimationController(
+    _cameraStateManager = camera_service.CameraStateManager();
+    _focusZoomController = FocusZoomController(_cameraStateManager);
+    _databaseHelper = DatabaseHelper(dbName: 'photo_management.db');
+
+    _focusZoomController.initializeFocusAnimation(this);
+
+    _menuAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _focusAnimation = Tween<double>(begin: 1.0, end: 0.5).animate(
-      CurvedAnimation(
-        parent: _focusAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
 
-    _setFullScreen();
+    SystemUIManager.setFullScreen();
     _initializeCamera();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _focusAnimationController.dispose();
-    _restoreSystemUI();
-    _controller?.dispose();
+    _focusZoomController.dispose();
+    _menuAnimationController.dispose();
+    SystemUIManager.restoreSystemUI();
+    _cameraStateManager.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_controller == null || !_controller!.value.isInitialized) {
-      return;
-    }
-
-    if (state == AppLifecycleState.inactive) {
-      _controller?.dispose();
-    } else if (state == AppLifecycleState.resumed) {
-      _initializeCamera();
-    }
-  }
-
-  void _setFullScreen() {
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-      overlays: [],
-    );
-  }
-
-  void _restoreSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
+    _cameraStateManager.handleAppLifecycleChange(state);
   }
 
   Future<void> _initializeCamera() async {
-    final permission = await Permission.camera.request();
-    if (!permission.isGranted) {
-      _showPermissionDeniedDialog();
-      return;
-    }
-
     try {
-      _cameras = await availableCameras();
-      if (_cameras.isEmpty) {
-        _showNoCameraDialog();
-        return;
+      await _cameraStateManager.initialize();
+      _focusZoomController.updateZoomLevels();
+      if (mounted) {
+        setState(() {});
       }
-
-      await _initializeCameraController();
     } catch (e) {
-      _showErrorDialog('Failed to initialize camera: $e');
+      if (e is camera_service.CameraException) {
+        if (e.code == 'permission_denied') {
+          CameraDialogs.showPermissionDeniedDialog(context);
+        } else if (e.code == 'no_camera') {
+          CameraDialogs.showNoCameraDialog(context);
+        } else {
+          CameraDialogs.showErrorDialog(context, e.toString());
+        }
+      } else {
+        CameraDialogs.showErrorDialog(
+          context,
+          'Failed to initialize camera: $e',
+        );
+      }
     }
   }
 
-  Future<void> _initializeCameraController() async {
-    if (_selectedCameraIndex >= _cameras.length) {
-      _selectedCameraIndex = 0;
-    }
+  void _toggleMenu() {
+    setState(() {
+      _showMenu = !_showMenu;
+    });
 
-    _controller = CameraController(
-      _cameras[_selectedCameraIndex],
-      ResolutionPreset.veryHigh,
-      enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.jpeg,
-    );
-
-    try {
-      await _controller!.initialize();
-      _minZoom = await _controller!.getMinZoomLevel();
-      _maxZoom = await _controller!.getMaxZoomLevel();
-
-      await _controller!.setFocusMode(FocusMode.auto);
-      await _controller!.setExposureMode(ExposureMode.auto);
-
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-          _currentZoom = _minZoom;
-          _baseZoom = _minZoom;
-        });
-      }
-    } catch (e) {
-      _showErrorDialog('Failed to initialize camera controller: $e');
+    if (_showMenu) {
+      _menuAnimationController.forward();
+    } else {
+      _menuAnimationController.reverse();
     }
   }
 
   Future<void> _takePicture() async {
-    if (_controller == null || !_controller!.value.isInitialized) {
-      return;
-    }
-
     try {
-      // Ensure autofocus before taking picture
-      if (!_isFocusing) {
-        await _controller!.setFocusMode(FocusMode.auto);
-      }
-
-      final directory = await getTemporaryDirectory();
-      final imagePath = path.join(
-        directory.path,
-        '${DateTime.now().millisecondsSinceEpoch}.jpg',
-      );
-
-      final image = await _controller!.takePicture();
-      await File(image.path).copy(imagePath);
-
+      final imagePath = await _cameraStateManager.takePicture();
+      
+      await _savePictureToDatabase(imagePath);
+      
       if (mounted) {
-        _showImageTakenSnackBar(imagePath);
+        CameraDialogs.showImageTakenSnackBar(context, imagePath);
       }
     } catch (e) {
-      _showErrorDialog('Failed to take picture: $e');
+      if (mounted) {
+        CameraDialogs.showErrorDialog(context, 'Failed to take picture: $e');
+      }
+    }
+  }
+
+  Future<void> _savePictureToDatabase(String imagePath) async {
+    try {
+      final file = File(imagePath);
+      final fileStats = await file.stat();
+      
+      final photo = Photo(
+        path: imagePath,
+        takenDate: DateTime.now(),
+        fileSize: fileStats.size,
+      );
+
+      await _databaseHelper.insertModel(photo);
+    } catch (e) {
+      print('Failed to save picture to database: $e');
     }
   }
 
   Future<void> _toggleFlash() async {
-    if (_controller == null || !_controller!.value.isInitialized) {
-      return;
-    }
-
     try {
-      final newFlashMode = _isFlashOn ? FlashMode.off : FlashMode.torch;
-      await _controller!.setFlashMode(newFlashMode);
-
+      await _cameraStateManager.toggleFlash();
       if (mounted) {
-        setState(() {
-          _isFlashOn = !_isFlashOn;
-        });
+        setState(() {});
       }
     } catch (e) {
-      _showErrorDialog('Failed to toggle flash: $e');
+      if (mounted) {
+        CameraDialogs.showErrorDialog(context, 'Failed to toggle flash: $e');
+      }
     }
   }
 
   Future<void> _switchCamera() async {
-    if (_cameras.length < 2) return;
-
-    _selectedCameraIndex = (_selectedCameraIndex + 1) % _cameras.length;
-
-    if (mounted) {
-      setState(() {
-        _isInitialized = false;
-      });
+    try {
+      await _cameraStateManager.switchCamera();
+      _focusZoomController.updateZoomLevels();
+      _focusZoomController.reset();
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        CameraDialogs.showErrorDialog(context, 'Failed to switch camera: $e');
+      }
     }
-
-    await _controller?.dispose();
-    await _initializeCameraController();
   }
 
   void _onZoomChanged(double zoom) {
-    if (_controller == null || !_controller!.value.isInitialized) {
-      return;
-    }
-
-    final clampedZoom = zoom.clamp(_minZoom, _maxZoom);
-    _controller!.setZoomLevel(clampedZoom);
-
+    _focusZoomController.onZoomChanged(zoom);
     if (mounted) {
-      setState(() {
-        _currentZoom = clampedZoom;
-      });
+      setState(() {});
     }
   }
 
-  // Enhanced zoom handling for gesture detection
   void _handleScaleStart(ScaleStartDetails details) {
-    _baseZoom = _currentZoom;
-    _isZooming = true;
+    _focusZoomController.handleScaleStart(details);
   }
 
   void _handleScaleUpdate(ScaleUpdateDetails details) {
-    if (!_isZooming ||
-        _controller == null ||
-        !_controller!.value.isInitialized) {
-      return;
+    _focusZoomController.handleScaleUpdate(details);
+    if (mounted) {
+      setState(() {});
     }
-
-    final newZoom = _baseZoom * details.scale;
-    _onZoomChanged(newZoom);
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
-    _isZooming = false;
+    _focusZoomController.handleScaleEnd(details);
   }
 
-  // Enhanced autofocus with tap-to-focus
   Future<void> _onFocusTap(TapUpDetails details) async {
-    if (_controller == null || !_controller!.value.isInitialized) {
-      return;
-    }
-
-    setState(() {
-      _isFocusing = true;
-    });
-
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final Offset localPoint = renderBox.globalToLocal(details.globalPosition);
-    final Size size = renderBox.size;
-
-    // Convert tap coordinates to camera coordinates (0.0 - 1.0)
-    final double x = localPoint.dx / size.width;
-    final double y = localPoint.dy / size.height;
-
-    final Offset focusPoint = Offset(x.clamp(0.0, 1.0), y.clamp(0.0, 1.0));
+    if (_showMenu) return;
 
     try {
-      // Set focus and exposure point
-      await _controller!.setFocusPoint(focusPoint);
-      await _controller!.setExposurePoint(focusPoint);
-
-      // Set focus mode to auto for better focusing
-      await _controller!.setFocusMode(FocusMode.auto);
-
-      // Update UI with focus indicator
-      setState(() {
-        _focusPoint = localPoint;
-      });
-
-      // Start focus animation
-      await _focusAnimationController.forward().then((_) {
-        _focusAnimationController.reverse();
-      });
-
-      // Hide focus indicator after 2 seconds
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            _focusPoint = null;
-            _isFocusing = false;
-          });
-        }
-      });
+      await _focusZoomController.onFocusTap(details, context);
+      if (mounted) {
+        setState(() {});
+      }
     } catch (e) {
-      setState(() {
-        _isFocusing = false;
-      });
-      _showErrorDialog('Failed to focus: $e');
+      if (mounted) {
+        CameraDialogs.showErrorDialog(context, 'Failed to focus: $e');
+      }
     }
   }
 
@@ -314,367 +216,108 @@ class _CameraScreenState extends State<CameraScreen>
     });
   }
 
-  void _showPermissionDeniedDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Camera Permission Required'),
-        content: const Text(
-          'This app needs camera permission to function properly.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              openAppSettings();
-            },
-            child: const Text('Settings'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showNoCameraDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('No Camera Found'),
-        content: const Text('No camera is available on this device.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showImageTakenSnackBar(String imagePath) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Image saved to: $imagePath'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  Widget _buildRightSideControl({
-    required String iconPath,
-    required String label,
-    VoidCallback? onTap,
-    bool showLabel = true,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showLabel && label.isNotEmpty) ...[
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(width: 10),
-          ],
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: SvgPicture.asset(
-                iconPath,
-                colorFilter: const ColorFilter.mode(
-                  Colors.white,
-                  BlendMode.srcIn,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Enhanced focus indicator widget
-  Widget _buildFocusIndicator() {
-    if (_focusPoint == null) return const SizedBox.shrink();
-
-    return AnimatedBuilder(
-      animation: _focusAnimation,
-      builder: (context, child) {
-        return Positioned(
-          left: _focusPoint!.dx - 50,
-          top: _focusPoint!.dy - 50,
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: _isFocusing ? Colors.yellow : Colors.green,
-                width: 2,
-              ),
-              color: Colors.transparent,
-            ),
-            child: _isFocusing
-                ? Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.yellow.withOpacity(_focusAnimation.value),
-                        ),
-                      ),
-                    ),
-                  )
-                : null,
-          ),
-        );
-      },
-    );
-  }
-
-  // Zoom indicator widget
-  Widget _buildZoomIndicator() {
-    if (_currentZoom <= _minZoom + 0.1) return const SizedBox.shrink();
-
-    return Positioned(
-      bottom: 150,
-      left: 20,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          '${_currentZoom.toStringAsFixed(1)}x',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: _isInitialized && _controller != null
-          ? Stack(
-              children: [
-                // Camera preview with gesture detection for zoom and focus
-                GestureDetector(
-                  onTapUp: _onFocusTap,
-                  onScaleStart: _handleScaleStart,
-                  onScaleUpdate: _handleScaleUpdate,
-                  onScaleEnd: _handleScaleEnd,
-                  child: _buildCameraPreviewExpanded(),
-                ),
-
-                // Grid overlay
-                if (_showGrid)
-                  const Positioned.fill(
-                    child: GridOverlay(),
-                  ),
-
-                // Focus indicator
-                _buildFocusIndicator(),
-
-                // Zoom indicator
-                _buildZoomIndicator(),
-
-                // Top controls
-                Positioned(
-                  top: 50,
-                  left: 20,
-                  right: 20,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: SvgPicture.asset(
-                            'assets/icons/burger.svg',
-                            colorFilter: const ColorFilter.mode(
-                              Colors.white,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ),
+      body:
+          _cameraStateManager.isInitialized &&
+              _cameraStateManager.controller != null
+          ? ListenableBuilder(
+              listenable: Listenable.merge([
+                _cameraStateManager,
+                _focusZoomController,
+              ]),
+              builder: (context, _) {
+                return Stack(
+                  children: [
+                    // Camera preview with gesture detection for zoom and focus
+                    GestureDetector(
+                      onTapUp: _onFocusTap,
+                      onScaleStart: _handleScaleStart,
+                      onScaleUpdate: _handleScaleUpdate,
+                      onScaleEnd: _handleScaleEnd,
+                      child: CameraUIComponents.buildCameraPreview(
+                        controller: _cameraStateManager.controller!,
                       ),
-                      Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: SvgPicture.asset(
-                                'assets/icons/person.svg',
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.white,
-                                  BlendMode.srcIn,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: _switchCamera,
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Image.asset(
-                                  'assets/icons/switch_camera.png',
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
 
-                // Right side controls
-                Positioned(
-                  top: 120,
-                  right: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildRightSideControl(
-                        onTap: _toggleFlash,
-                        iconPath: _isFlashOn
-                            ? 'assets/icons/flash_on.svg'
-                            : 'assets/icons/flash_off.svg',
-                        label: 'Flash',
+                    // Grid overlay
+                    if (_showGrid && !_showMenu)
+                      const Positioned.fill(child: GridOverlay()),
+
+                    // Focus indicator
+                    if (_focusZoomController.focusAnimation != null)
+                      CameraUIComponents.buildFocusIndicator(
+                        focusPoint: _focusZoomController.focusPoint,
+                        isFocusing: _focusZoomController.isFocusing,
+                        showMenu: _showMenu,
+                        focusAnimation: _focusZoomController.focusAnimation!,
                       ),
-                      const SizedBox(height: 30),
-                      if (_showMoreControls)
-                        Column(
-                          children: [
-                            _buildRightSideControl(
-                              iconPath:
-                                  'assets/icons/copy_icon_that_represent_multi_click.svg',
-                              label: 'Multi Click',
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-                        )
-                      else
-                        const SizedBox.shrink(),
-                      if (_showMoreControls)
-                        Column(
-                          children: [
-                            _buildRightSideControl(
-                              iconPath: 'assets/icons/timer_off.svg',
-                              label: 'Timer',
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-                        )
-                      else
-                        const SizedBox.shrink(),
-                      GestureDetector(
-                        onTap: _toggleMoreControls,
-                        child: _buildRightSideControl(
-                          iconPath: _showMoreControls
-                              ? 'assets/icons/show_less_items.svg'
-                              : 'assets/icons/show_more_item.svg',
-                          label: '',
-                          showLabel: false,
+
+                    // Zoom indicator
+                    CameraUIComponents.buildZoomIndicator(
+                      currentZoom: _focusZoomController.currentZoom,
+                      minZoom: _focusZoomController.minZoom,
+                      showMenu: _showMenu,
+                    ),
+
+                    // Top controls
+                    CameraUIComponents.buildTopControls(
+                      showMenu: _showMenu,
+                      onMenuToggle: _toggleMenu,
+                      onSwitchCamera: _switchCamera,
+                    ),
+
+                    // Right side controls
+                    CameraUIComponents.buildRightSideControls(
+                      showMenu: _showMenu,
+                      isFlashOn: _cameraStateManager.isFlashOn,
+                      showMoreControls: _showMoreControls,
+                      onToggleFlash: _toggleFlash,
+                      onToggleMoreControls: _toggleMoreControls,
+                    ),
+
+                    // Bottom controls
+                    if (!_showMenu)
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: CameraControls(
+                          onCapture: _takePicture,
+                          onSwitchCamera: _switchCamera,
+                          canSwitchCamera: _cameraStateManager.canSwitchCamera,
+                          onZoomChanged: _onZoomChanged,
+                          currentZoom: _focusZoomController.currentZoom,
+                          minZoom: _focusZoomController.minZoom,
+                          maxZoom: _focusZoomController.maxZoom,
                         ),
                       ),
-                    ],
-                  ),
-                ),
 
-                // Bottom camera controls
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: CameraControls(
-                    onCapture: _takePicture,
-                    onSwitchCamera: _switchCamera,
-                    canSwitchCamera: _cameras.length > 1,
-                  ),
-                ),
-              ],
+                    // Slide-out menu
+                    SlideOutMenu(
+                      isVisible: _showMenu,
+                      selectedAspectRatio: _selectedAspectRatio,
+                      selectedTimer: _selectedTimer,
+                      animationController: _menuAnimationController,
+                      onClose: _toggleMenu,
+                      onAspectRatioChanged: (ratio) {
+                        setState(() {
+                          _selectedAspectRatio = ratio;
+                        });
+                      },
+                      onTimerChanged: (timer) {
+                        setState(() {
+                          _selectedTimer = timer;
+                        });
+                      },
+                    ),
+                  ],
+                );
+              },
             )
-          : const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-              ),
-            ),
-    );
-  }
-
-  Widget _buildCameraPreviewExpanded() {
-    return SizedBox.expand(
-      child: FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: _controller!.value.previewSize?.height ?? 1,
-          height: _controller!.value.previewSize?.width ?? 1,
-          child: CameraPreview(_controller!),
-        ),
-      ),
+          : const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
   }
 }

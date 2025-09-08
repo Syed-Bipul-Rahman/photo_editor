@@ -2,17 +2,64 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/core.dart';
+
 class CameraControls extends StatelessWidget {
   final VoidCallback onCapture;
   final VoidCallback onSwitchCamera;
   final bool canSwitchCamera;
+  final Function(double) onZoomChanged;
+  final double currentZoom;
+  final double minZoom; // Add this parameter
+  final double maxZoom; // Add this parameter
 
   const CameraControls({
     super.key,
     required this.onCapture,
     required this.onSwitchCamera,
     required this.canSwitchCamera,
+    required this.onZoomChanged,
+    required this.currentZoom,
+    required this.minZoom, // Add this parameter
+    required this.maxZoom, // Add this parameter
   });
+
+  // Generate zoom levels based on camera capabilities
+  List<double> get _availableZoomLevels {
+    List<double> zoomLevels = [];
+
+    // Add ultra-wide (0.5x or 0.6x) if camera supports it
+    if (minZoom <= 0.6) {
+      zoomLevels.add(0.6);
+    } else if (minZoom <= 0.5) {
+      zoomLevels.add(0.5);
+    }
+
+    // Always add 1x if possible
+    if (minZoom <= 1.0 && maxZoom >= 1.0) {
+      zoomLevels.add(1.0);
+    }
+
+    // Add 2x if camera supports it
+    if (maxZoom >= 2.0) {
+      zoomLevels.add(2.0);
+    }
+
+    // Add 3x if camera supports it
+    if (maxZoom >= 3.0) {
+      zoomLevels.add(3.0);
+    }
+
+    // If no standard zoom levels are available, use min and max
+    if (zoomLevels.isEmpty) {
+      zoomLevels.add(minZoom);
+      if (maxZoom > minZoom) {
+        zoomLevels.add(maxZoom);
+      }
+    }
+
+    return zoomLevels;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,10 +69,7 @@ class CameraControls extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            Colors.black.withValues(alpha: 0.8),
-          ],
+          colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
         ),
       ),
       child: Padding(
@@ -34,13 +78,7 @@ class CameraControls extends StatelessWidget {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildZoomButton('0.6'),
-                const SizedBox(width: 20),
-                _buildZoomButton('1X', isSelected: true),
-                const SizedBox(width: 20),
-                _buildZoomButton('2'),
-              ],
+              children: _buildZoomButtons(),
             ),
             const SizedBox(height: 20),
             Row(
@@ -71,20 +109,38 @@ class CameraControls extends StatelessWidget {
     );
   }
 
+  List<Widget> _buildZoomButtons() {
+    final zoomLevels = _availableZoomLevels;
+    List<Widget> buttons = [];
+
+    for (int i = 0; i < zoomLevels.length; i++) {
+      if (i > 0) {
+        buttons.add(const SizedBox(width: 20));
+      }
+
+      final zoomLevel = zoomLevels[i];
+      String label;
+
+      if (zoomLevel < 1.0) {
+        label = '${(zoomLevel).toStringAsFixed(1)}x';
+      } else if (zoomLevel == 1.0) {
+        label = '1x';
+      } else {
+        label = '${zoomLevel.toInt()}x';
+      }
+
+      buttons.add(_buildZoomButton(label, zoomLevel));
+    }
+
+    return buttons;
+  }
+
   Widget _buildGalleryButton() {
     return SizedBox(
       width: 60,
       height: 60,
-      // decoration: BoxDecoration(
-      //   color: Colors.white.withValues(alpha: 0.2),
-      //   borderRadius: BorderRadius.circular(8),
-      //   border: Border.all(
-      //     color: Colors.white.withValues(alpha: 0.3),
-      //     width: 1,
-      //   ),
-      // ),
       child: SvgPicture.asset(
-        'assets/icons/albums_icon.svg',
+        AppIcons.albumsIcon,
         colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
       ),
     );
@@ -93,36 +149,37 @@ class CameraControls extends StatelessWidget {
   Widget _buildCaptureButton() {
     return GestureDetector(
       onTap: onCapture,
-      child: Container(
+      child: SizedBox(
         width: 80,
         height: 80,
         child: SvgPicture.asset(
-          'assets/icons/click_single_image.svg',
+          AppIcons.clickSingleImage,
           fit: BoxFit.cover,
         ),
       ),
     );
   }
 
-  Widget _buildZoomButton(String label, {bool isSelected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? Colors.white.withValues(alpha: 0.3)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
+  Widget _buildZoomButton(String label, double zoomLevel) {
+    final isSelected = (currentZoom - zoomLevel).abs() < 0.1;
+    return GestureDetector(
+      onTap: () => onZoomChanged(zoomLevel),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.white.withOpacity(0.3)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
         ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ),
     );
@@ -134,15 +191,12 @@ class CameraControls extends StatelessWidget {
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: Colors.white.withOpacity(0.2),
         shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
       ),
       child: Image.asset(
-        'assets/images/for_preview_delete_this_later.png',
+        AppImages.forPreviewDeleteThisLater,
         fit: BoxFit.cover,
       ),
     );
