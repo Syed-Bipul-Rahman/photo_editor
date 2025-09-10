@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:photo_management_app/counter/counter.dart';
+import 'package:photo_management_app/album/cubit/counter_cubit.dart';
 
 void main() {
   group('CounterCubit', () {

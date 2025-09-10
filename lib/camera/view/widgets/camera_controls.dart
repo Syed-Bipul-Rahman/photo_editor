@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:photo_management_app/routing/app_routes.dart';
 
 import '../../../core/core.dart';
+import '../../../routing/app_router.dart';
 
 class CameraControls extends StatelessWidget {
   final VoidCallback onCapture;
@@ -85,22 +87,32 @@ class CameraControls extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  children: [
-                    _buildGalleryButton(),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Albums',
-                      style: GoogleFonts.publicSans(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                        color: const Color(0xFFFFFFFF),
+                GestureDetector(
+                  onTap: () {
+                    AppRouter.instance.pushNamed(AppRoutes.album);
+                  },
+                  child: Column(
+                    children: [
+                      _buildGalleryButton(),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Albums',
+                        style: GoogleFonts.publicSans(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          color: const Color(0xFFFFFFFF),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 _buildCaptureButton(),
-                _buildRecentClicks(),
+                GestureDetector(
+                  onTap: () {
+                    AppRouter.instance.pushNamed(AppRoutes.editor);
+                  },
+                  child: _buildRecentClicks(),
+                ),
               ],
             ),
           ],
@@ -152,10 +164,7 @@ class CameraControls extends StatelessWidget {
       child: SizedBox(
         width: 80,
         height: 80,
-        child: SvgPicture.asset(
-          AppIcons.clickSingleImage,
-          fit: BoxFit.cover,
-        ),
+        child: SvgPicture.asset(AppIcons.clickSingleImage, fit: BoxFit.cover),
       ),
     );
   }

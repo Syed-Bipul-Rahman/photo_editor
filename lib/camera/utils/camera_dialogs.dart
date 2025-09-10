@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class CameraDialogs {
   static void showPermissionDeniedDialog(BuildContext context) {
@@ -59,13 +60,12 @@ class CameraDialogs {
     );
   }
 
-  static void showImageTakenSnackBar(BuildContext context, String imagePath) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Image saved to: $imagePath'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.green,
-      ),
-    );
+  static Future<void> playClickSound() async {
+    try {
+      final player = AudioPlayer();
+      await player.play(AssetSource('sound/click_one.wav'));
+    } catch (e) {
+      // Silently handle audio playback errors
+    }
   }
 }

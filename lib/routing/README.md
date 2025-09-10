@@ -19,11 +19,11 @@ A powerful, zero-dependency routing solution for Flutter with built-in data shar
 
 ```dart
 // Navigate to a route
-AppRouter.instance.pushNamed('/counter');
+AppRouter.instance.pushNamed('/album');
 
 // Navigate with data
 AppRouter.instance.pushNamed(
-  '/counter',
+  '/album',
   data: {'title': 'My Counter', 'initialValue': 5},
 );
 
