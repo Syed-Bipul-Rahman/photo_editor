@@ -25,6 +25,7 @@ dependencies:
   flutter_cache_manager:
   visibility_detector:
   audioplayers:
+  image:
 
 dev_dependencies:
   bloc_test: ^10.0.0

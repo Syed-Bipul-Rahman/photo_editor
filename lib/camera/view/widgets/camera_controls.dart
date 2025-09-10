@@ -107,7 +107,12 @@ class CameraControls extends StatelessWidget {
                   ),
                 ),
                 _buildCaptureButton(),
-                _buildRecentClicks(),
+                GestureDetector(
+                  onTap: () {
+                    AppRouter.instance.pushNamed(AppRoutes.editor);
+                  },
+                  child: _buildRecentClicks(),
+                ),
               ],
             ),
           ],
