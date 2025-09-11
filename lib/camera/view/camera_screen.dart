@@ -1,5 +1,6 @@
 // CameraController needed for UI components
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_management_app/camera/controllers/focus_zoom_controller.dart';
 import 'package:photo_management_app/camera/models/photo_model.dart';
@@ -344,7 +345,9 @@ class _CameraScreenState extends State<CameraScreen>
                 );
               },
             )
-          : const Center(child: CircularProgressIndicator(color: Colors.white)),
+          : const Center(
+              child: CupertinoActivityIndicator(color: Colors.white),
+            ),
     );
   }
 }

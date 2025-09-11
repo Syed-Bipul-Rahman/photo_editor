@@ -1,24 +1,41 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'package:photo_management_app/editor/crop/crop_your_image.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 class EditorPage extends StatefulWidget {
-  const EditorPage({super.key});
+  final VoidCallback? onCrop;
+
+  const EditorPage({super.key, this.onCrop});
 
   @override
-  State<EditorPage> createState() => _EditorPageState();
+  State<EditorPage> createState() => EditorPageState();
 }
 
-class _EditorPageState extends State<EditorPage> {
+class EditorPageState extends State<EditorPage> {
   static const _images = const [
-    'assets/images/porimoni.jpg',
-    'assets/images/porimoni.jpg',
-    'assets/images/for_preview_delete_this_later.png',
     'assets/images/for_preview_delete_this_later.png',
   ];
 
   final _cropController = CropController();
+
+  void performCrop() {
+    setState(() => _isCropping = true);
+    _cropController.crop();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.onCrop != null ? _setupCropCallback() : null;
+    _loadAllImages();
+  }
+
+  void _setupCropCallback() {
+    // Store the crop function reference for external access
+  }
+
   final _imageDataList = <Uint8List>[];
 
   var _loadingImage = false;
@@ -33,18 +50,8 @@ class _EditorPageState extends State<EditorPage> {
 
   var _isThumbnail = false;
   var _isCropping = false;
-  var _isCircleUi = false;
   Uint8List? _croppedData;
-  var _statusText = '';
   var _isOverlayActive = true;
-  var _undoEnabled = false;
-  var _redoEnabled = false;
-
-  @override
-  void initState() {
-    _loadAllImages();
-    super.initState();
-  }
 
   Future<void> _loadAllImages() async {
     setState(() {
@@ -73,21 +80,6 @@ class _EditorPageState extends State<EditorPage> {
           visible: !_loadingImage && !_isCropping,
           child: Column(
             children: [
-              if (_imageDataList.length >= 4)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      _buildThumbnail(_imageDataList[0]),
-                      const SizedBox(width: 16),
-                      _buildThumbnail(_imageDataList[1]),
-                      const SizedBox(width: 16),
-                      _buildThumbnail(_imageDataList[2]),
-                      const SizedBox(width: 16),
-                      _buildThumbnail(_imageDataList[3]),
-                    ],
-                  ),
-                ),
               Expanded(
                 child: Visibility(
                   visible: _croppedData == null,
@@ -121,80 +113,44 @@ class _EditorPageState extends State<EditorPage> {
                             }
                             setState(() => _isCropping = false);
                           },
-                          withCircleUi: _isCircleUi,
-                          onStatusChanged: (status) => setState(() {
-                            _statusText =
-                                <CropStatus, String>{
-                                  CropStatus.nothing: 'Crop has no image data',
-                                  CropStatus.loading:
-                                      'Crop is now loading given image',
-                                  CropStatus.ready: 'Crop is now ready!',
-                                  CropStatus.cropping:
-                                      'Crop is now cropping image',
-                                }[status] ??
-                                '';
-                          }),
+
                           maskColor: _isThumbnail ? Colors.white : null,
                           cornerDotBuilder: (size, edgeAlignment) =>
-                              const SizedBox.shrink(),
-                          interactive: true,
-                          fixCropRect: true,
-                          radius: 20,
+                              const Icon(Icons.circle, color: Colors.white),
+                          interactive: false,
+                          fixCropRect: false,
+                          // radius: 20,
                           initialRectBuilder: InitialRectBuilder.withBuilder((
                             viewportRect,
                             imageRect,
                           ) {
-                            return Rect.fromLTRB(
-                              viewportRect.left + 24,
-                              viewportRect.top + 24,
-                              viewportRect.right - 24,
-                              viewportRect.bottom - 24,
+                            // Calculate 90% of image dimensions
+                            final imageWidth = imageRect.width;
+                            final imageHeight = imageRect.height;
+                            final cropWidth = imageWidth * 0.9;
+                            final cropHeight = imageHeight * 0.9;
+
+                            // Center the crop rect within the image
+                            final centerX = imageRect.left + (imageWidth / 2);
+                            final centerY = imageRect.top + (imageHeight / 2);
+
+                            return Rect.fromCenter(
+                              center: Offset(centerX, centerY),
+                              width: cropWidth,
+                              height: cropHeight,
                             );
                           }),
-                          onHistoryChanged: (history) => setState(() {
-                            _undoEnabled = history.undoCount > 0;
-                            _redoEnabled = history.redoCount > 0;
-                          }),
+
                           overlayBuilder: _isOverlayActive
                               ? (context, rect) {
                                   final overlay = CustomPaint(
                                     painter: GridPainter(),
                                   );
-                                  return _isCircleUi
-                                      ? ClipOval(child: overlay)
-                                      : overlay;
+                                  return overlay;
                                 }
                               : null,
                         ),
-                        IgnorePointer(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  width: 4,
-                                  color: Colors.white,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
-                      Positioned(
-                        right: 16,
-                        bottom: 16,
-                        child: GestureDetector(
-                          onTapDown: (_) => setState(() => _isThumbnail = true),
-                          onTapUp: (_) => setState(() => _isThumbnail = false),
-                          child: CircleAvatar(
-                            backgroundColor: _isThumbnail
-                                ? Colors.blue.shade50
-                                : Colors.blue,
-                            child: Center(child: Icon(Icons.crop_free_rounded)),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                   replacement: Center(
@@ -204,134 +160,9 @@ class _EditorPageState extends State<EditorPage> {
                   ),
                 ),
               ),
-              if (_croppedData == null)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.crop_7_5),
-                            onPressed: () {
-                              _isCircleUi = false;
-                              _cropController.aspectRatio = 16 / 4;
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.crop_16_9),
-                            onPressed: () {
-                              _isCircleUi = false;
-                              _cropController.aspectRatio = 16 / 9;
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.crop_5_4),
-                            onPressed: () {
-                              _isCircleUi = false;
-                              _cropController.aspectRatio = 4 / 3;
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.crop_square),
-                            onPressed: () {
-                              _isCircleUi = false;
-                              _cropController
-                                ..withCircleUi = false
-                                ..aspectRatio = 1;
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.circle),
-                            onPressed: () {
-                              _isCircleUi = true;
-                              _cropController.withCircleUi = true;
-                            },
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Show Grid'),
-                          Switch(
-                            value: _isOverlayActive,
-                            onChanged: (value) {
-                              setState(() {
-                                _isOverlayActive = value;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton(
-                            onPressed: _undoEnabled
-                                ? () => _cropController.undo()
-                                : null,
-                            child: Text('UNDO'),
-                          ),
-                          const SizedBox(width: 16),
-                          ElevatedButton(
-                            onPressed: _redoEnabled
-                                ? () => _cropController.redo()
-                                : null,
-                            child: Text('REDO'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _isCropping = true;
-                            });
-                            _isCircleUi
-                                ? _cropController.cropCircle()
-                                : _cropController.crop();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Text('CROP IT!'),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Text(_statusText),
-              const SizedBox(height: 16),
             ],
           ),
-          replacement: const CircularProgressIndicator(),
-        ),
-      ),
-    );
-  }
-
-  Expanded _buildThumbnail(Uint8List data) {
-    final index = _imageDataList.indexOf(data);
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          _croppedData = null;
-          currentImage = index;
-        },
-        child: Container(
-          height: 100,
-          decoration: BoxDecoration(
-            border: index == _currentImage
-                ? Border.all(width: 8, color: Colors.blue)
-                : null,
-          ),
-          child: Image.memory(data, fit: BoxFit.cover),
+          replacement: CupertinoActivityIndicator(),
         ),
       ),
     );
