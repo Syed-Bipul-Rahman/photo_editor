@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:photo_management_app/routing/app_router.dart';
 
 import '../../camera/models/photo_model.dart';
 
@@ -47,21 +48,48 @@ class FullscreenImageViewer extends StatelessWidget {
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             right: 16,
-            child: Material(
-              color: Colors.black.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(24),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(24),
-                onTap: () => Navigator.of(context).pop(),
-                child: const Padding(
-                  padding: EdgeInsets.all(12.0),
-                  child: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 24,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Material(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(24),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
+                      AppRouter.instance.pushNamed(
+                        '/editor',
+                        data: {'imagePath': photo.path},
+                      );
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: Icon(
+                        Icons.edit,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Material(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(24),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
