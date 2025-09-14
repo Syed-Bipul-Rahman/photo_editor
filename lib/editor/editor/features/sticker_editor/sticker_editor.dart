@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+
+import 'package:photo_management_app/editor/editor/core/mixins/converted_configs.dart';
+import 'package:photo_management_app/editor/editor/core/mixins/editor_configs_mixin.dart';
+import 'package:photo_management_app/editor/editor/core/models/editor_callbacks/pro_image_editor_callbacks.dart';
+import 'package:photo_management_app/editor/editor/core/models/editor_configs/pro_image_editor_configs.dart';
+import 'package:photo_management_app/editor/editor/core/models/layers/layer.dart';
+import 'package:photo_management_app/editor/editor/shared/widgets/extended/extended_pop_scope.dart';
+
+/// The `StickerEditor` class is responsible for creating a widget that allows
+/// users to select stickers
+class StickerEditor extends StatefulWidget with SimpleConfigsAccess {
+  /// Creates an `StickerEditor` widget.
+  const StickerEditor({
+    super.key,
+    required this.configs,
+    this.callbacks = const ProImageEditorCallbacks(),
+    required this.scrollController,
+  });
+  @override
+  final ProImageEditorConfigs configs;
+
+  @override
+  final ProImageEditorCallbacks callbacks;
+
+  /// Controller for managing scroll actions.
+  final ScrollController scrollController;
+
+  @override
+  createState() => StickerEditorState();
+}
+
+/// The state class for the `StickerEditor` widget.
+class StickerEditorState extends State<StickerEditor>
+    with ImageEditorConvertedConfigs, SimpleConfigsAccessState {
+  /// Closes the editor without applying changes.
+  void close() {
+    Navigator.pop(context);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    callbacks.stickerEditorCallbacks?.onInit?.call();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      callbacks.stickerEditorCallbacks?.onAfterViewInit?.call();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    assert(
+      stickerEditorConfigs.builder != null,
+      '`builder` is required',
+    );
+
+    return ExtendedPopScope(
+      child: stickerEditorConfigs.builder!.call(
+        setLayer,
+        widget.scrollController,
+      ),
+    );
+  }
+
+  /// Close the editor with the selected widget-layer.
+  void setLayer(WidgetLayer widgetLayer) {
+    Navigator.of(context).pop(widgetLayer);
+  }
+}
