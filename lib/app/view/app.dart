@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_management_app/l10n/l10n.dart';
 import 'package:photo_management_app/routing/routing.dart';
 import 'package:photo_management_app/routing/app_routes.dart';
+import 'package:photo_management_app/toast/src/core/toast.dart';
 
 // Create a global RouteObserver instance
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -14,20 +15,22 @@ class App extends StatelessWidget {
     final router = AppRouter.instance;
     router.addRoutes(AppRoutes.routes);
 
-    return MaterialApp(
-      navigatorKey: router.navigatorKey,
-      // Add the RouteObserver to navigatorObservers
-      navigatorObservers: [routeObserver, ...router.observers],
-      onGenerateRoute: router.generateRoute,
-      initialRoute: AppRoutes.camera,
-      theme: ThemeData(
-        appBarTheme: AppBarTheme(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+    return OKToast(
+      child: MaterialApp(
+        navigatorKey: router.navigatorKey,
+        // Add the RouteObserver to navigatorObservers
+        navigatorObservers: [routeObserver, ...router.observers],
+        onGenerateRoute: router.generateRoute,
+        initialRoute: AppRoutes.camera,
+        theme: ThemeData(
+          appBarTheme: AppBarTheme(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
       ),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }
