@@ -12,8 +12,8 @@ class CameraControls extends StatelessWidget {
   final bool canSwitchCamera;
   final Function(double) onZoomChanged;
   final double currentZoom;
-  final double minZoom; // Add this parameter
-  final double maxZoom; // Add this parameter
+  final double minZoom;
+  final double maxZoom;
 
   const CameraControls({
     super.key,
@@ -22,8 +22,8 @@ class CameraControls extends StatelessWidget {
     required this.canSwitchCamera,
     required this.onZoomChanged,
     required this.currentZoom,
-    required this.minZoom, // Add this parameter
-    required this.maxZoom, // Add this parameter
+    required this.minZoom,
+    required this.maxZoom,
   });
 
   // Generate zoom levels based on camera capabilities
