@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../album/view/album_page.dart';
 import '../camera/view/camera_page.dart';
+import '../editor/editor/pro_editor_vaiya.dart';
 import '../editor/view/editor_screen.dart';
 import 'route_config.dart';
 
@@ -25,7 +26,7 @@ class AppRoutes {
     RouteConfig(
       name: editor,
       path: editor,
-      builder: (context) => const EditorScreen(),
+      builder: (context) => const ProEditorVaiya(),
       transition: RouteTransition.fade,
     ),
   ];

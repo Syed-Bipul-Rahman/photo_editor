@@ -26,6 +26,11 @@ dependencies:
   visibility_detector:
   audioplayers:
   image:
+  shared_preferences:
+  http: ^1.5.0
+  plugin_platform_interface: ^2.1.8
+  vector_math: ^2.1.4
+  web: ^1.1.1
 
 dev_dependencies:
   bloc_test: ^10.0.0
