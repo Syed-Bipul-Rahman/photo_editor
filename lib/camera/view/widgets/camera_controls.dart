@@ -14,6 +14,7 @@ class CameraControls extends StatelessWidget {
   final double currentZoom;
   final double minZoom;
   final double maxZoom;
+  final VoidCallback? onNavigateAway; // Add this callback
 
   const CameraControls({
     super.key,
@@ -24,6 +25,7 @@ class CameraControls extends StatelessWidget {
     required this.currentZoom,
     required this.minZoom,
     required this.maxZoom,
+    this.onNavigateAway, // Add this parameter
   });
 
   // Generate zoom levels based on camera capabilities
@@ -63,6 +65,25 @@ class CameraControls extends StatelessWidget {
     return zoomLevels;
   }
 
+  // With RouteAware, you don't need manual pause/resume!
+  // The camera will automatically pause when navigating away
+
+  void _navigateToAlbum(BuildContext context) {
+    // Pause camera before navigation
+    if (onNavigateAway != null) {
+      onNavigateAway!();
+    }
+    AppRouter.instance.pushNamed(AppRoutes.album);
+  }
+
+  void _navigateToEditor(BuildContext context) {
+    // Pause camera before navigation
+    if (onNavigateAway != null) {
+      onNavigateAway!();
+    }
+    AppRouter.instance.pushNamed(AppRoutes.editor);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -88,9 +109,7 @@ class CameraControls extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 GestureDetector(
-                  onTap: () {
-                    AppRouter.instance.pushNamed(AppRoutes.album);
-                  },
+                  onTap: () => _navigateToAlbum(context), // Updated
                   child: Column(
                     children: [
                       _buildGalleryButton(),
@@ -108,9 +127,7 @@ class CameraControls extends StatelessWidget {
                 ),
                 _buildCaptureButton(),
                 GestureDetector(
-                  onTap: () {
-                    AppRouter.instance.pushNamed(AppRoutes.editor);
-                  },
+                  onTap: () => _navigateToEditor(context), // Updated
                   child: _buildRecentClicks(),
                 ),
               ],

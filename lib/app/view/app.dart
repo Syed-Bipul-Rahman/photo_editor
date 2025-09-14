@@ -3,6 +3,9 @@ import 'package:photo_management_app/l10n/l10n.dart';
 import 'package:photo_management_app/routing/routing.dart';
 import 'package:photo_management_app/routing/app_routes.dart';
 
+// Create a global RouteObserver instance
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 class App extends StatelessWidget {
   const App({super.key});
 
@@ -13,7 +16,8 @@ class App extends StatelessWidget {
 
     return MaterialApp(
       navigatorKey: router.navigatorKey,
-      navigatorObservers: router.observers,
+      // Add the RouteObserver to navigatorObservers
+      navigatorObservers: [routeObserver, ...router.observers],
       onGenerateRoute: router.generateRoute,
       initialRoute: AppRoutes.camera,
       theme: ThemeData(
