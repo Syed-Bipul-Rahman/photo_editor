@@ -2,14 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:photo_management_app/routing/app_router.dart';
+import 'package:photo_management_app/routing/app_routes.dart';
 
 import '../../camera/models/photo_model.dart';
 
 class FullscreenImageViewer extends StatelessWidget {
-  const FullscreenImageViewer({
-    required this.photo,
-    super.key,
-  });
+  const FullscreenImageViewer({required this.photo, super.key});
 
   final Photo photo;
 
@@ -58,17 +56,13 @@ class FullscreenImageViewer extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24),
                     onTap: () {
                       AppRouter.instance.pushNamed(
-                        '/editor',
+                        AppRoutes.editor,
                         data: {'imagePath': photo.path},
                       );
                     },
                     child: const Padding(
                       padding: EdgeInsets.all(12.0),
-                      child: Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                      child: Icon(Icons.edit, color: Colors.white, size: 24),
                     ),
                   ),
                 ),
@@ -81,11 +75,7 @@ class FullscreenImageViewer extends StatelessWidget {
                     onTap: () => Navigator.of(context).pop(),
                     child: const Padding(
                       padding: EdgeInsets.all(12.0),
-                      child: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                      child: Icon(Icons.close, color: Colors.white, size: 24),
                     ),
                   ),
                 ),

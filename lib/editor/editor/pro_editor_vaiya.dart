@@ -2,13 +2,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_management_app/camera/utils/log_helper.dart';
 import 'package:photo_management_app/editor/editor/pro_image_editor.dart';
 import 'package:photo_management_app/routing/route_data.dart';
 import 'package:photo_management_app/toast/src/core/position.dart';
 import 'package:photo_management_app/toast/src/core/toast.dart';
+
+import '../../gallery_saver/gallery_saver.dart';
 
 class ProEditorVaiya extends StatefulWidget {
   const ProEditorVaiya({super.key});
@@ -18,6 +18,7 @@ class ProEditorVaiya extends StatefulWidget {
 }
 
 class _ProEditorVaiyaState extends State<ProEditorVaiya> {
+  /*
   Future<bool> _requestStoragePermission() async {
     if (Platform.isAndroid) {
       final androidInfo = await Permission.storage.status;
@@ -41,12 +42,13 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
       return directory.path;
     }
   }
+*/
 
   @override
   Widget build(BuildContext context) {
     // Get image path from route data, fallback to default asset if not provided
     final imagePath = RouteData.instance.get<String>('imagePath');
-    
+
     if (imagePath != null && File(imagePath).existsSync()) {
       // Use file constructor if we have a valid file path
       return ProImageEditor.file(
@@ -55,17 +57,17 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
           onImageEditingComplete: (Uint8List bytes) async {
             try {
               // Request storage permission
-              bool hasPermission = await _requestStoragePermission();
-              if (!hasPermission) {
-                showToast(
-                  "Storage permission required to save photo",
-                  duration: Duration(seconds: 3),
-                  position: ToastPosition.bottom,
-                );
-                LoggerHelper.error("Storage permission denied");
-                return;
-              }
-
+              // bool hasPermission = await _requestStoragePermission();
+              // if (!hasPermission) {
+              //   showToast(
+              //     "Storage permission required to save photo",
+              //     duration: Duration(seconds: 3),
+              //     position: ToastPosition.bottom,
+              //   );
+              //   LoggerHelper.error("Storage permission required to save photo");
+              //   return;
+              // }
+              /*
               // Get public Pictures directory
               final picturesPath = await _getPublicPicturesPath();
               final picturesDir = Directory(picturesPath);
@@ -79,13 +81,18 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
               final file = File('$picturesPath/$fileName');
 
               await file.writeAsBytes(bytes);
+*/
+              final result = await GallerySaver.saveFile(imagePath);
+              print(result);
 
               showToast(
-                "Photo saved to Pictures folder",
+                "Photo saved to Phone",
                 duration: Duration(seconds: 3),
                 position: ToastPosition.bottom,
               );
-              LoggerHelper.info("Image saved to public Pictures: ${file.path}");
+              LoggerHelper.info(
+                "Image saved to public Pictures: ${result['filePath']}",
+              );
             } catch (e) {
               showToast(
                 "Error saving photo",
@@ -105,14 +112,14 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
           onImageEditingComplete: (Uint8List bytes) async {
             try {
               // Request storage permission
-              bool hasPermission = await _requestStoragePermission();
+              /*   bool hasPermission = await _requestStoragePermission();
               if (!hasPermission) {
                 showToast(
                   "Storage permission required to save photo",
                   duration: Duration(seconds: 3),
                   position: ToastPosition.bottom,
                 );
-                LoggerHelper.error("Storage permission denied");
+                LoggerHelper.error("Storage permission required to save photo");
                 return;
               }
 
@@ -125,7 +132,8 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
                 await picturesDir.create(recursive: true);
               }
 
-              final fileName = "pro_editor_${DateTime.now().millisecondsSinceEpoch}.jpg";
+              final fileName =
+                  "pro_editor_${DateTime.now().millisecondsSinceEpoch}.jpg";
               final file = File('$picturesPath/$fileName');
 
               await file.writeAsBytes(bytes);
@@ -135,7 +143,21 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
                 duration: Duration(seconds: 3),
                 position: ToastPosition.bottom,
               );
-              LoggerHelper.info("Image saved to public Pictures: ${file.path}");
+              LoggerHelper.info("Image saved to public Pictures: ${file.path}");*/
+
+              final result = await GallerySaver.saveImage(
+                bytes.buffer.asUint8List(),
+              );
+              print(result);
+
+              showToast(
+                "Photo saved to Phone",
+                duration: Duration(seconds: 3),
+                position: ToastPosition.bottom,
+              );
+              LoggerHelper.info(
+                "Image saved to public Pictures: ${result['filePath']}",
+              );
             } catch (e) {
               showToast(
                 "Error saving photo",
