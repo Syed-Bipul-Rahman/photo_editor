@@ -21,7 +21,7 @@ class App extends StatelessWidget {
         // Add the RouteObserver to navigatorObservers
         navigatorObservers: [routeObserver, ...router.observers],
         onGenerateRoute: router.generateRoute,
-        initialRoute: AppRoutes.camera,
+        initialRoute: AppRoutes.onboarding,
         theme: ThemeData(
           appBarTheme: AppBarTheme(
             backgroundColor: Theme.of(context).colorScheme.inversePrimary,
