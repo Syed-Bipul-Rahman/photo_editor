@@ -77,6 +77,24 @@ class _CameraScreenState extends State<CameraScreen>
     _cameraStateManager.handleAppLifecycleChange(state);
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Handle returning from navigation
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent && _cameraStateManager.isPaused) {
+      // Resume camera when returning to this screen
+      _cameraStateManager.resume();
+    }
+  }
+
+  // Handle navigation away from camera screen
+  void _onNavigateAway() {
+    if (!_cameraStateManager.isPaused && _cameraStateManager.isInitialized) {
+      _cameraStateManager.pause();
+    }
+  }
+
   Future<void> _initializeCamera() async {
     try {
       await _cameraStateManager.initialize();
@@ -216,11 +234,6 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
-  void _toggleGrid() {
-    setState(() {
-      _showGrid = !_showGrid;
-    });
-  }
 
   void _toggleMoreControls() {
     setState(() {
@@ -244,15 +257,23 @@ class _CameraScreenState extends State<CameraScreen>
                 return Stack(
                   children: [
                     // Camera preview with gesture detection for zoom and focus
-                    GestureDetector(
-                      onTapUp: _onFocusTap,
-                      onScaleStart: _handleScaleStart,
-                      onScaleUpdate: _handleScaleUpdate,
-                      onScaleEnd: _handleScaleEnd,
-                      child: CameraUIComponents.buildCameraPreview(
-                        controller: _cameraStateManager.controller!,
+                    if (_cameraStateManager.controller != null && _cameraStateManager.isInitialized)
+                      GestureDetector(
+                        onTapUp: _onFocusTap,
+                        onScaleStart: _handleScaleStart,
+                        onScaleUpdate: _handleScaleUpdate,
+                        onScaleEnd: _handleScaleEnd,
+                        child: CameraUIComponents.buildCameraPreview(
+                          controller: _cameraStateManager.controller!,
+                        ),
+                      )
+                    else
+                      // Show loading indicator while camera is initializing/resuming
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
 
                     // Grid overlay
                     if (_showGrid && !_showMenu)
@@ -304,6 +325,8 @@ class _CameraScreenState extends State<CameraScreen>
                           currentZoom: _focusZoomController.currentZoom,
                           minZoom: _focusZoomController.minZoom,
                           maxZoom: _focusZoomController.maxZoom,
+                          // Add the onNavigateAway callback:
+                          onNavigateAway: _onNavigateAway,
                         ),
                       ),
 

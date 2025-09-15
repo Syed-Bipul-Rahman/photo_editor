@@ -10,30 +10,6 @@ import '../image/palette_uint32.dart';
 import '../image/palette_uint8.dart';
 import 'quantizer.dart';
 
-/* NeuQuant Neural-Net Quantization Algorithm
- * ------------------------------------------
- *
- * Copyright (c) 1994 Anthony Dekker
- *
- * NEUQUANT Neural-Net quantization algorithm by Anthony Dekker, 1994.
- * See "Kohonen neural networks for optimal colour quantization"
- * in "Network: Computation in Neural Systems" Vol. 5 (1994) pp 351-367.
- * for a discussion of the algorithm.
- * See also  http://members.ozemail.com.au/~dekker/NEUQUANT.HTML
- *
- * Any party obtaining a copy of these files from the author, directly or
- * indirectly, is granted, free of charge, a full and unrestricted irrevocable,
- * world-wide, paid up, royalty-free, nonexclusive right and license to deal
- * in this software and documentation files (the "Software"), including without
- * limitation the rights to use, copy, modify, merge, publish, distribute,
- * sublicense,
- * and/or sell copies of the Software, and to permit persons who receive
- * copies from any such party to do so, with the only requirement being
- * that this copyright notice remain intact.
- *
- * Dart port by Brendan Duncan.
- */
-
 /// Compute a color map with a given number of colors that best represents
 /// the given image.
 class NeuralQuantizer extends Quantizer {

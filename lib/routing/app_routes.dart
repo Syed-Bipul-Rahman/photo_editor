@@ -21,13 +21,13 @@ class AppRoutes {
       name: album,
       path: album,
       builder: (context) => const AlbumPage(),
-      transition: RouteTransition.fade,
+      transition: RouteTransition.slideFromBottom,
     ),
     RouteConfig(
       name: editor,
       path: editor,
       builder: (context) => const ProEditorVaiya(),
-      transition: RouteTransition.fade,
+      transition: RouteTransition.slideFromBottom,
     ),
   ];
 }

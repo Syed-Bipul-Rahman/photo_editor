@@ -1,9 +1,3 @@
-// Copyright (c) 2013, the Dart project authors.  Please see the AUTHORS file
-// for details. All rights reserved. Use of this source code is governed by a
-// BSD-style license that can be found in the LICENSE file.
-
-// ignore_for_file: public_member_api_docs
-
 final MimeTypeResolver _globalResolver = MimeTypeResolver();
 const int initialMagicNumbersMaxLength = 12;
 

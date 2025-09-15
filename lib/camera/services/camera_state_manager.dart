@@ -12,14 +12,19 @@ class CameraStateManager extends ChangeNotifier {
   bool _isFlashOn = false;
   int _selectedCameraIndex = 0;
   bool _isDisposed = false;
+  bool _isPaused = false;
+
+  // Store the last camera description for resuming
+  CameraDescription? _lastCameraDescription;
 
   // Getters
   CameraController? get controller => _controller;
   List<CameraDescription> get cameras => _cameras;
-  bool get isInitialized => _isInitialized;
+  bool get isInitialized => _isInitialized && !_isPaused;
   bool get isFlashOn => _isFlashOn;
   int get selectedCameraIndex => _selectedCameraIndex;
   bool get canSwitchCamera => _cameras.length > 1;
+  bool get isPaused => _isPaused;
 
   Future<void> initialize() async {
     final permission = await Permission.camera.request();
@@ -34,6 +39,10 @@ class CameraStateManager extends ChangeNotifier {
       }
 
       await _initializeCameraController();
+      // Store the last camera description for resuming
+      if (_controller != null) {
+        _lastCameraDescription = _controller!.description;
+      }
     } catch (e) {
       throw CameraException('initialization_failed', 'Failed to initialize camera: $e');
     }
@@ -155,22 +164,120 @@ class CameraStateManager extends ChangeNotifier {
     await _controller!.setZoomLevel(zoom);
   }
 
-  void handleAppLifecycleChange(AppLifecycleState state) {
-    if (_controller == null || !_controller!.value.isInitialized) {
+  /// Pause camera operations - stops preview and releases camera resources
+  Future<void> pause() async {
+    if (_isPaused || !_isInitialized || _controller == null || _isDisposed) {
       return;
     }
 
-    if (state == AppLifecycleState.inactive) {
+    try {
+      debugPrint('CameraStateManager: Pausing camera...');
+      _isPaused = true;
+      
+      // Store current camera for resume
+      if (_controller != null) {
+        _lastCameraDescription = _controller!.description;
+      }
+      
+      // Stop the camera preview and dispose controller
+      await _controller?.dispose();
+      _controller = null;
+      
+      notifyListeners();
+      debugPrint('CameraStateManager: Camera paused successfully');
+    } catch (e) {
+      debugPrint('CameraStateManager: Error pausing camera: $e');
+    }
+  }
+
+  /// Resume camera operations - reinitializes camera with last settings
+  Future<void> resume() async {
+    if (!_isPaused || _isDisposed) {
+      return;
+    }
+
+    try {
+      debugPrint('CameraStateManager: Resuming camera...');
+      _isPaused = false;
+      
+      // Re-initialize camera with the last camera description if available
+      if (_lastCameraDescription != null) {
+        await _initializeWithCamera(_lastCameraDescription!);
+      } else {
+        // Fallback to default initialization
+        await initialize();
+      }
+      
+      debugPrint('CameraStateManager: Camera resumed successfully');
+    } catch (e) {
+      debugPrint('CameraStateManager: Error resuming camera: $e');
+      _isPaused = true; // Reset pause state if resume failed
+      notifyListeners();
+    }
+  }
+
+  /// Helper method to initialize with specific camera
+  Future<void> _initializeWithCamera(CameraDescription cameraDescription) async {
+    try {
+      _controller = CameraController(
+        cameraDescription,
+        ResolutionPreset.veryHigh,
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+
+      await _controller!.initialize();
+      await _controller!.setFocusMode(FocusMode.auto);
+      await _controller!.setExposureMode(ExposureMode.auto);
+
+      if (!_isDisposed) {
+        _isInitialized = true;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('CameraStateManager: Failed to initialize camera: $e');
       _controller?.dispose();
-    } else if (state == AppLifecycleState.resumed) {
-      initialize();
+      _controller = null;
+      rethrow;
+    }
+  }
+
+  void handleAppLifecycleChange(AppLifecycleState state) {
+    if (_isDisposed) return;
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        debugPrint('CameraStateManager: App resumed');
+        if (_isPaused && !_isDisposed) {
+          resume();
+        }
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        debugPrint('CameraStateManager: App paused/inactive/detached');
+        if (!_isPaused && _isInitialized) {
+          pause();
+        }
+        break;
+      case AppLifecycleState.hidden:
+        debugPrint('CameraStateManager: App hidden');
+        // Handle if needed
+        break;
     }
   }
 
   @override
   void dispose() {
+    debugPrint('CameraStateManager: Disposing...');
     _isDisposed = true;
-    _controller?.dispose();
+
+    if (!_isPaused) {
+      _controller?.dispose();
+    }
+    
+    _controller = null;
+    _lastCameraDescription = null;
     super.dispose();
   }
 }
