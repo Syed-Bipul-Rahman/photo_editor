@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,6 +18,8 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int indicatorIndex = 0;
+  Timer? _timer;
+  int _currentPage = 0;
   final List<Map<String, String>> pages = [
     {
       "image": AppImages.girl1,
@@ -36,6 +39,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _startAutoSlide();
+  }
+
+  void _startAutoSlide() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _currentPage++;
+      _pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -51,7 +71,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   SizedBox(),
                   Image.asset(AppImages.logoOnboarding),
-                  Text(AppStrings.signIn, style: TextStyle(color: AppColors.primaryLight)),
+                  Text(
+                    AppStrings.signIn,
+                    style: TextStyle(color: AppColors.primaryLight),
+                  ),
                 ],
               ),
 
@@ -64,12 +87,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   controller: _pageController,
                   onPageChanged: (index) {
                     setState(() {
-                      indicatorIndex = index;
+                      _currentPage = index;
+                      indicatorIndex = index % pages.length;
                     });
                   },
-                  itemCount: pages.length,
+                  itemCount: null,
                   itemBuilder: (context, index) {
-                    final page = pages[index];
+                    final page = pages[index % pages.length];
                     return SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -184,6 +208,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
