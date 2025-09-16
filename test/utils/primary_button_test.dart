@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:photo_management_app/utils/primary_button.dart';
+import 'package:photo_management_app/core/widgets/primary_button.dart';
 
 void main() {
   group('PrimaryButton', () {
@@ -8,10 +8,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: PrimaryButton(
-              text: 'Test Button',
-              onPressed: () {},
-            ),
+            body: PrimaryButton(text: 'Test Button', onPressed: () {}),
           ),
         ),
       );
@@ -21,7 +18,7 @@ void main() {
 
     testWidgets('calls onPressed when tapped', (WidgetTester tester) async {
       bool wasPressed = false;
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -39,7 +36,9 @@ void main() {
       expect(wasPressed, isTrue);
     });
 
-    testWidgets('shows loading indicator when isLoading is true', (WidgetTester tester) async {
+    testWidgets('shows loading indicator when isLoading is true', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -58,9 +57,11 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('is disabled when isActive is false', (WidgetTester tester) async {
+    testWidgets('is disabled when isActive is false', (
+      WidgetTester tester,
+    ) async {
       bool wasPressed = false;
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

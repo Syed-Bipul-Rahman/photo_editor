@@ -15,4 +15,5 @@ abstract class AppIcons {
   static const String switchCamera = '$_basePath/switch_camera.png';
   static const String timerOff = '$_basePath/timer_off.svg';
   static const String timerOn = '$_basePath/timer_on.svg';
+  static const String backArrow = '$_basePath/back_arrow.svg';
 }

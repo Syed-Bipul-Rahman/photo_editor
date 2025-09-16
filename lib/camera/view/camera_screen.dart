@@ -8,7 +8,7 @@ import 'package:photo_management_app/camera/services/camera_state_manager.dart'
     as camera_service;
 import 'package:photo_management_app/camera/services/system_ui_manager.dart';
 import 'package:photo_management_app/camera/utils/camera_dialogs.dart';
-import 'package:photo_management_app/camera/utils/db_helper.dart';
+import 'package:photo_management_app/core/utils/db_helper.dart';
 import 'package:photo_management_app/camera/view/widgets/camera_controls.dart';
 import 'package:photo_management_app/camera/view/widgets/grid_overlay.dart';
 import 'package:photo_management_app/camera/widgets/camera_ui_components.dart';

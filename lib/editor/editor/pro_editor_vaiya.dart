@@ -2,15 +2,15 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:photo_management_app/camera/utils/log_helper.dart';
+import 'package:photo_management_app/core/utils/log_helper.dart';
 import 'package:photo_management_app/editor/editor/pro_image_editor.dart';
 import 'package:photo_management_app/routing/route_data.dart';
-import 'package:photo_management_app/toast/src/core/position.dart';
-import 'package:photo_management_app/toast/src/core/toast.dart';
+import 'package:photo_management_app/core/services/toast/src/core/position.dart';
+import 'package:photo_management_app/core/services/toast/src/core/toast.dart';
 
 import '../../core/constants/app_images.dart';
 import '../../core/constants/app_strings.dart';
-import '../../gallery_saver/gallery_saver.dart';
+import '../../core/services/gallery_saver/gallery_saver.dart';
 
 class ProEditorVaiya extends StatefulWidget {
   const ProEditorVaiya({super.key});

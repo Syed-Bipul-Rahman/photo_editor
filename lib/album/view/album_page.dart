@@ -6,8 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../camera/models/photo_model.dart';
-import '../../camera/utils/db_helper.dart';
-import '../../utils/app_bar.dart';
+import '../../core/utils/db_helper.dart';
+import '../../core/widgets/app_bar.dart';
 import '../cubit/counter_cubit.dart';
 import 'fullscreen_image_viewer.dart';
 

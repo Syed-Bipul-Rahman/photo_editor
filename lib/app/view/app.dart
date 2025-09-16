@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:photo_management_app/l10n/l10n.dart';
 import 'package:photo_management_app/routing/routing.dart';
 import 'package:photo_management_app/routing/app_routes.dart';
-import 'package:photo_management_app/toast/src/core/toast.dart';
+
+import '../../core/services/toast/src/core/toast.dart';
 
 // Create a global RouteObserver instance
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();

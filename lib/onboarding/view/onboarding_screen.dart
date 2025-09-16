@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_images.dart';
 import '../../core/constants/app_strings.dart';
-import '../../utils/primary_button.dart';
+import '../../core/widgets/primary_button.dart';
 import '../widgets/slide_indicator.dart';
 
 class OnboardingScreen extends StatefulWidget {
