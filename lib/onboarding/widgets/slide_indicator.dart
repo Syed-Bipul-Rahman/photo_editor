@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
+
 class SlideIndicator extends StatefulWidget {
   int length;
   int indicatorIndex;
@@ -23,8 +25,8 @@ class _SlideIndicatorState extends State<SlideIndicator> {
           height: 8,
           decoration: BoxDecoration(
             color: widget.indicatorIndex == dotIndex
-                ? const Color(0xFF3BA6E4)
-                : const Color(0xFFD2D2D2),
+                ? AppColors.indicatorActive
+                : AppColors.indicatorInactive,
             borderRadius: BorderRadius.circular(4),
           ),
         ),

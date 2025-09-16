@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/core.dart';
 
 class CameraUIComponents {
@@ -19,7 +20,7 @@ class CameraUIComponents {
             Text(
               label,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.cameraText,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
               ),
@@ -30,7 +31,7 @@ class CameraUIComponents {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: AppColors.cameraControlBackgroundTransparent,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Padding(
@@ -38,7 +39,7 @@ class CameraUIComponents {
               child: SvgPicture.asset(
                 iconPath,
                 colorFilter: const ColorFilter.mode(
-                  Colors.white,
+                  AppColors.cameraText,
                   BlendMode.srcIn,
                 ),
               ),
@@ -68,7 +69,7 @@ class CameraUIComponents {
             height: 100,
             decoration: BoxDecoration(
               border: Border.all(
-                color: isFocusing ? Colors.yellow : Colors.green,
+                color: isFocusing ? AppColors.focusIndicatorActive : AppColors.focusIndicatorInactive,
                 width: 2,
               ),
               color: Colors.transparent,
@@ -81,7 +82,7 @@ class CameraUIComponents {
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.yellow.withOpacity(focusAnimation.value),
+                          AppColors.focusIndicatorActive.withOpacity(focusAnimation.value),
                         ),
                       ),
                     ),
@@ -108,13 +109,13 @@ class CameraUIComponents {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.6),
+          color: AppColors.cameraOverlay,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           '${currentZoom.toStringAsFixed(1)}x',
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.cameraText,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -143,7 +144,7 @@ class CameraUIComponents {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: AppColors.cameraControlBackgroundTransparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
@@ -164,7 +165,7 @@ class CameraUIComponents {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: AppColors.cameraControlBackgroundTransparent,
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Padding(
@@ -185,14 +186,14 @@ class CameraUIComponents {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: AppColors.cameraControlBackgroundTransparent,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(10),
                     child: Image.asset(
                       AppIcons.switchCamera,
-                      color: Colors.white,
+                      color: AppColors.cameraText,
                     ),
                   ),
                 ),

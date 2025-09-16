@@ -2,26 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:audioplayers/audioplayers.dart';
 
+import '../../core/constants/app_strings.dart';
+
 class CameraDialogs {
   static void showPermissionDeniedDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Camera Permission Required'),
+        title: const Text(AppStrings.cameraPermissionRequired),
         content: const Text(
-          'This app needs camera permission to function properly.',
+          AppStrings.cameraPermissionExplanation,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
               openAppSettings();
             },
-            child: const Text('Settings'),
+            child: const Text(AppStrings.settings),
           ),
         ],
       ),
@@ -32,12 +34,12 @@ class CameraDialogs {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('No Camera Found'),
-        content: const Text('No camera is available on this device.'),
+        title: const Text(AppStrings.noCameraFound),
+        content: const Text(AppStrings.noCameraAvailable),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: const Text(AppStrings.ok),
           ),
         ],
       ),
@@ -48,12 +50,12 @@ class CameraDialogs {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Error'),
+                title: const Text(AppStrings.error),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: const Text(AppStrings.ok),
           ),
         ],
       ),

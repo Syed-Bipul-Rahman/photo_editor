@@ -14,6 +14,8 @@ import 'package:photo_management_app/camera/view/widgets/grid_overlay.dart';
 import 'package:photo_management_app/camera/widgets/camera_ui_components.dart';
 import 'package:photo_management_app/camera/widgets/slide_out_menu.dart';
 
+import '../../core/constants/app_colors.dart';
+
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
 
@@ -244,7 +246,7 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.backgroundDark,
       body:
           _cameraStateManager.isInitialized &&
               _cameraStateManager.controller != null
@@ -271,7 +273,7 @@ class _CameraScreenState extends State<CameraScreen>
                       // Show loading indicator while camera is initializing/resuming
                       const Center(
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.cameraText,
                         ),
                       ),
 
@@ -356,7 +358,7 @@ class _CameraScreenState extends State<CameraScreen>
                         return _flashAnimationController.value > 0
                             ? Positioned.fill(
                                 child: Container(
-                                  color: Colors.black.withValues(
+                                  color: AppColors.cameraOverlayDark.withValues(
                                     alpha: _flashAnimationController.value,
                                   ),
                                 ),
@@ -369,7 +371,7 @@ class _CameraScreenState extends State<CameraScreen>
               },
             )
           : const Center(
-              child: CupertinoActivityIndicator(color: Colors.white),
+              child: CupertinoActivityIndicator(color: AppColors.cameraText),
             ),
     );
   }

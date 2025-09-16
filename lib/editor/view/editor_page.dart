@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:photo_management_app/editor/crop/crop_your_image.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../../core/constants/app_images.dart';
+
 class EditorPage extends StatefulWidget {
   final VoidCallback? onCrop;
 
@@ -15,7 +17,7 @@ class EditorPage extends StatefulWidget {
 
 class EditorPageState extends State<EditorPage> {
   static const _images = const [
-    'assets/images/for_preview_delete_this_later.png',
+    AppImages.forPreviewDeleteThisLater,
   ];
 
   final _cropController = CropController();

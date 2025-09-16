@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants/app_strings.dart';
+
 enum AppBarType { selection, trash, timeline, detail }
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -274,13 +276,13 @@ class _AppBarExampleState extends State<AppBarExample> {
         selectedCount: selectedCount,
         isAllSelected: isAllSelected,
         onSelectAll: _toggleSelectAll,
-        onBack: () => _showSnackBar('Back pressed'),
-        onCamera: () => _showSnackBar('Camera pressed'),
-        onSearch: () => _showSnackBar('Search pressed'),
-        onMenu: () => _showSnackBar('Menu pressed'),
-        onShare: () => _showSnackBar('Share pressed'),
-        onDelete: () => _showSnackBar('Delete pressed'),
-        onMore: () => _showSnackBar('More pressed'),
+        onBack: () => _showSnackBar(AppStrings.backPressed),
+        onCamera: () => _showSnackBar(AppStrings.cameraPressed),
+        onSearch: () => _showSnackBar(AppStrings.searchPressed),
+        onMenu: () => _showSnackBar(AppStrings.menuPressed),
+        onShare: () => _showSnackBar(AppStrings.sharePressed),
+        onDelete: () => _showSnackBar(AppStrings.deletePressed),
+        onMore: () => _showSnackBar(AppStrings.morePressed),
       ),
       body: Center(
         child: Column(

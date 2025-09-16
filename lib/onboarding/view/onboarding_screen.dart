@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_images.dart';
+import '../../core/constants/app_strings.dart';
+import '../../utils/primary_button.dart';
 import '../widgets/slide_indicator.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -14,17 +19,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int indicatorIndex = 0;
   final List<Map<String, String>> pages = [
     {
-      "image": "assets/images/girl1.jpg",
+      "image": AppImages.girl1,
       "title": "Get control over your Happiness",
       "button": "Next",
     },
     {
-      "image": "assets/images/girl2.jpg",
+      "image": AppImages.girl2,
       "title": "Optimize your system",
       "button": "Next",
     },
     {
-      "image": "assets/images/girl3.jpg",
+      "image": AppImages.girl3,
       "title": "Better Storage, Easy Share ability",
       "button": "Get started",
     },
@@ -45,8 +50,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   SizedBox(),
-                  Image.asset('assets/images/logo_onboarding.png'),
-                  Text("sign in", style: TextStyle(color: Color(0xFF7CC3ED))),
+                  Image.asset(AppImages.logoOnboarding),
+                  Text(AppStrings.signIn, style: TextStyle(color: AppColors.primaryLight)),
                 ],
               ),
 
@@ -74,7 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             height: 222,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(16),
-                              color: Colors.grey.shade200,
+                              color: AppColors.galleryItemBackground[200],
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
@@ -84,13 +89,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.shade300,
+                                      color: AppColors.galleryItemError[300],
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: const Icon(
                                       Icons.image,
                                       size: 50,
-                                      color: Colors.grey,
+                                      color: AppColors.galleryBackground,
                                     ),
                                   );
                                 },
@@ -105,15 +110,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF1A1A1A),
+                              color: AppColors.textPrimary,
                             ),
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-
-                          /// Page Indicator (Custom implementation)
                         ],
                       ),
                     );
@@ -124,6 +127,53 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               SlideIndicator(
                 indicatorIndex: indicatorIndex,
                 length: pages.length,
+              ),
+              SizedBox(height: 64),
+              Container(
+                width: double.infinity,
+                height: 48,
+                clipBehavior: Clip.antiAlias,
+                decoration: ShapeDecoration(
+                  color: AppColors.buttonPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 83,
+                      top: 13,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 12,
+                        children: [
+                          Image.asset(AppImages.googleLogo),
+                          Text(
+                            AppStrings.signUpWithGoogle,
+                            style: GoogleFonts.publicSans(
+                              color: AppColors.textLight,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              height: 1.50,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(AppStrings.or),
+              SizedBox(height: 16),
+              PrimaryButton(
+                text: 'Sign up With Email',
+                onPressed: () {
+                  // TODO: Implement sign up with email functionality
+                },
               ),
             ],
           ),

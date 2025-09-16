@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
+
 class SlideOutMenu extends StatefulWidget {
   final bool isVisible;
   final String selectedAspectRatio;
@@ -47,7 +49,7 @@ class _SlideOutMenuState extends State<SlideOutMenu> {
       child: GestureDetector(
         onTap: widget.onClose,
         child: Container(
-          color: Colors.black.withOpacity(0.3),
+          color: AppColors.cameraOverlay,
           child: GestureDetector(
             onTap: () {}, // Prevent closing when tapping on menu
             child: Align(
@@ -68,7 +70,7 @@ class _SlideOutMenuState extends State<SlideOutMenu> {
       width: MediaQuery.of(context).size.width * 0.85,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.9),
+        color: AppColors.cameraOverlayDark,
         borderRadius: const BorderRadius.only(
           topRight: Radius.circular(20),
           bottomRight: Radius.circular(20),
@@ -102,7 +104,7 @@ class _SlideOutMenuState extends State<SlideOutMenu> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.3),
+        color: AppColors.galleryItemBackground.withOpacity(0.3),
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
@@ -115,14 +117,14 @@ class _SlideOutMenuState extends State<SlideOutMenu> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF00BCD4)
+                    ? AppColors.primaryLight
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 ratio,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.cameraText,
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
@@ -140,7 +142,7 @@ class _SlideOutMenuState extends State<SlideOutMenu> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.3),
+        color: AppColors.galleryItemBackground.withOpacity(0.3),
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
@@ -153,14 +155,14 @@ class _SlideOutMenuState extends State<SlideOutMenu> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Colors.grey.withOpacity(0.6)
+                    ? AppColors.galleryItemBackground.withOpacity(0.6)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 timer,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.cameraText,
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
@@ -260,15 +262,15 @@ class _SlideOutMenuState extends State<SlideOutMenu> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey.withOpacity(0.3),
+              color: AppColors.galleryItemBackground.withOpacity(0.3),
             ),
-            child: Icon(icon, color: Colors.white, size: 24),
+            child: Icon(icon, color: AppColors.cameraText, size: 24),
           ),
           const SizedBox(height: 8),
           Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.cameraText,
               fontSize: 12,
               fontWeight: FontWeight.w400,
             ),
