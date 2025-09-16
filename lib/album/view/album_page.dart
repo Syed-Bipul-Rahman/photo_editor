@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_strings.dart';
 import '../../camera/models/photo_model.dart';
-import '../../camera/utils/db_helper.dart';
-import '../../utils/app_bar.dart';
+import '../../core/utils/db_helper.dart';
+import '../../core/widgets/app_bar.dart';
 import '../cubit/counter_cubit.dart';
 import 'fullscreen_image_viewer.dart';
 
@@ -147,8 +149,8 @@ class _AlbumViewState extends State<AlbumView> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading photos: $e'),
-            backgroundColor: Colors.red,
+            content: Text(AppStrings.errorLoadingPhotos + '$e'),
+            backgroundColor: AppColors.editorError,
           ),
         );
       }
@@ -183,10 +185,10 @@ class _AlbumViewState extends State<AlbumView> {
       errorBuilder: (context, error, stackTrace) {
         return Container(
           decoration: BoxDecoration(
-            color: Colors.grey[300],
+            color: AppColors.galleryItemBackground[300],
             borderRadius: BorderRadius.circular(4.0),
           ),
-          child: const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+          child: const Icon(Icons.broken_image, color: AppColors.galleryBackground, size: 40),
         );
       },
       frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
@@ -229,17 +231,17 @@ class _AlbumViewState extends State<AlbumView> {
                     Icon(
                       Icons.photo_library_outlined,
                       size: 64,
-                      color: Colors.grey,
+                      color: AppColors.galleryBackground,
                     ),
                     SizedBox(height: 16),
                     Text(
                       'No photos found',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(fontSize: 16, color: AppColors.galleryBackground),
                     ),
                     SizedBox(height: 8),
                     Text(
                       'Pull down to refresh',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(fontSize: 12, color: AppColors.galleryBackground),
                     ),
                   ],
                 ),
@@ -303,7 +305,7 @@ class _AlbumViewState extends State<AlbumView> {
                             'You\'ve reached the end\n${_photos.length} photos loaded',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: AppColors.galleryItemBackground[600],
                               fontSize: 12,
                             ),
                           ),

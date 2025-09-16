@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_management_app/routing/app_router.dart';
 import 'package:photo_management_app/routing/app_routes.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../camera/models/photo_model.dart';
 
 class FullscreenImageViewer extends StatelessWidget {
@@ -14,7 +15,7 @@ class FullscreenImageViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.backgroundDark,
       body: Stack(
         children: [
           Center(
@@ -29,12 +30,12 @@ class FullscreenImageViewer extends StatelessWidget {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[800],
+                        color: AppColors.galleryItemBackground[800],
                         borderRadius: BorderRadius.circular(4.0),
                       ),
                       child: const Icon(
                         Icons.broken_image,
-                        color: Colors.white,
+                        color: AppColors.cameraText,
                         size: 64,
                       ),
                     );
@@ -68,14 +69,14 @@ class FullscreenImageViewer extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Material(
-                  color: Colors.black.withValues(alpha: 0.5),
+                  color: AppColors.cameraOverlay,
                   borderRadius: BorderRadius.circular(24),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(24),
                     onTap: () => Navigator.of(context).pop(),
                     child: const Padding(
                       padding: EdgeInsets.all(12.0),
-                      child: Icon(Icons.close, color: Colors.white, size: 24),
+                      child: Icon(Icons.close, color: AppColors.cameraText, size: 24),
                     ),
                   ),
                 ),

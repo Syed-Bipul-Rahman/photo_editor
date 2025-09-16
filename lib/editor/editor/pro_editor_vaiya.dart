@@ -2,13 +2,15 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:photo_management_app/camera/utils/log_helper.dart';
+import 'package:photo_management_app/core/utils/log_helper.dart';
 import 'package:photo_management_app/editor/editor/pro_image_editor.dart';
 import 'package:photo_management_app/routing/route_data.dart';
-import 'package:photo_management_app/toast/src/core/position.dart';
-import 'package:photo_management_app/toast/src/core/toast.dart';
+import 'package:photo_management_app/core/services/toast/src/core/position.dart';
+import 'package:photo_management_app/core/services/toast/src/core/toast.dart';
 
-import '../../gallery_saver/gallery_saver.dart';
+import '../../core/constants/app_images.dart';
+import '../../core/constants/app_strings.dart';
+import '../../core/services/gallery_saver/gallery_saver.dart';
 
 class ProEditorVaiya extends StatefulWidget {
   const ProEditorVaiya({super.key});
@@ -86,7 +88,7 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
               print(result);
 
               showToast(
-                "Photo saved to Phone",
+                AppStrings.photoSavedToPhone,
                 duration: Duration(seconds: 3),
                 position: ToastPosition.bottom,
               );
@@ -95,7 +97,7 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
               );
             } catch (e) {
               showToast(
-                "Error saving photo",
+                AppStrings.errorSavingPhoto,
                 duration: Duration(seconds: 3),
                 position: ToastPosition.bottom,
               );
@@ -107,7 +109,7 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
     } else {
       // Fallback to default asset if no valid path provided
       return ProImageEditor.asset(
-        'assets/images/porimoni.jpg',
+        AppImages.porimoni,
         callbacks: ProImageEditorCallbacks(
           onImageEditingComplete: (Uint8List bytes) async {
             try {
@@ -115,7 +117,7 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
               /*   bool hasPermission = await _requestStoragePermission();
               if (!hasPermission) {
                 showToast(
-                  "Storage permission required to save photo",
+                  AppStrings.storagePermissionRequired,
                   duration: Duration(seconds: 3),
                   position: ToastPosition.bottom,
                 );
@@ -139,7 +141,7 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
               await file.writeAsBytes(bytes);
 
               showToast(
-                "Photo saved to Pictures folder",
+                AppStrings.photoSavedToPictures,
                 duration: Duration(seconds: 3),
                 position: ToastPosition.bottom,
               );
@@ -151,7 +153,7 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
               print(result);
 
               showToast(
-                "Photo saved to Phone",
+                AppStrings.photoSavedToPhone,
                 duration: Duration(seconds: 3),
                 position: ToastPosition.bottom,
               );
@@ -160,7 +162,7 @@ class _ProEditorVaiyaState extends State<ProEditorVaiya> {
               );
             } catch (e) {
               showToast(
-                "Error saving photo",
+                AppStrings.errorSavingPhoto,
                 duration: Duration(seconds: 3),
                 position: ToastPosition.bottom,
               );

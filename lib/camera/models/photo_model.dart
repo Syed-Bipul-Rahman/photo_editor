@@ -1,4 +1,4 @@
-import '../utils/db_helper.dart';
+import '../../core/utils/db_helper.dart';
 
 class Photo implements DatabaseModel {
   final int? id;

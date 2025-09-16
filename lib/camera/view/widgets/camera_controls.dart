@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:photo_management_app/routing/app_routes.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/core.dart';
 import '../../../routing/app_router.dart';
 
@@ -92,7 +93,7 @@ class CameraControls extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+          colors: [AppColors.cameraOverlay, AppColors.cameraOverlayDark],
         ),
       ),
       child: Padding(
@@ -119,7 +120,7 @@ class CameraControls extends StatelessWidget {
                         style: GoogleFonts.publicSans(
                           fontWeight: FontWeight.w500,
                           fontSize: 16,
-                          color: const Color(0xFFFFFFFF),
+                          color: AppColors.cameraText,
                         ),
                       ),
                     ],
@@ -194,15 +195,15 @@ class CameraControls extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.white.withOpacity(0.3)
+              ? AppColors.cameraText.withOpacity(0.3)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+          border: Border.all(color: AppColors.cameraText.withOpacity(0.3), width: 1),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.cameraText,
             fontSize: 16,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
@@ -217,9 +218,9 @@ class CameraControls extends StatelessWidget {
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: AppColors.cameraText.withOpacity(0.2),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+        border: Border.all(color: AppColors.cameraText.withOpacity(0.3), width: 1),
       ),
       child: Image.asset(
         AppImages.forPreviewDeleteThisLater,
